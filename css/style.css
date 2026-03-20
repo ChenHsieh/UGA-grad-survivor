@@ -273,3 +273,14 @@ body {
   --font-serif: 'Space Mono', monospace;
   --font-sans: 'Space Mono', monospace;
 }
+
+/* Crimson / Red & Black */
+[data-theme="red"] {
+  --bg: #000000; --surface: #0d0d0d; --card-bg: #ffffff; --card-text: #000000;
+  --red: #e00020; --gold: #e00020; --green: #888888;
+  --text: #ffffff; --dim: #666666; --border: #1a1a1a;
+  --muted: #333333; --card-dim: #999999;
+  --font-mono: 'Space Mono', monospace;
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'DM Sans', sans-serif;
+}

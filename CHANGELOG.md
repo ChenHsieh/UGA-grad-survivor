@@ -144,6 +144,15 @@ Added 7 new universal cards covering two under-represented tensions in computati
 
 ---
 
+## v0.11 — Crimson Theme & OG Image Refresh
+2026-03-20 · *co-authored with Claude Sonnet 4.6*
+
+**New "Crimson" theme:** Added a sixth selectable theme — pure black (`#000`), white, and a single sharp red (`#e00020`). No warm tints. Card background is white, accent and danger color are the same red, positive stat bars render in neutral gray. Available from the `?` theme picker as "Crimson."
+
+**OG image redesign:** Rebuilt `og-preview.html` to match the current game aesthetic. Updated card copy and metadata (8 archetypes, 6 advisors, 226 cards). The new design uses Playfair Display + Space Mono, a vertical column divider, hard edges throughout, and the red/black palette.
+
+---
+
 ## vNext — Secret Diary Cards *(planned)*
 
 A hidden card layer: personal journal entries that surface based on accumulated run history, offering narrative reflection and small stat effects.

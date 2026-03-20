@@ -375,8 +375,8 @@ function showHelp() {
       <div class="theme-picker">
         <div class="share-label">THEME</div>
         <div class="theme-btns">
-          ${['cold','terminal','zine','pixel','classic'].map(t => {
-            const labels = {cold:'Institutional',terminal:'Terminal',zine:'Zine',pixel:'Pixel',classic:'Classic'};
+          ${['cold','terminal','zine','pixel','classic','red'].map(t => {
+            const labels = {cold:'Institutional',terminal:'Terminal',zine:'Zine',pixel:'Pixel',classic:'Classic',red:'Crimson'};
             const active = document.documentElement.getAttribute('data-theme') === t ? ' active' : '';
             return `<button class="theme-btn${active}" data-theme="${t}" onclick="setTheme('${t}')">${labels[t]}</button>`;
           }).join('')}
