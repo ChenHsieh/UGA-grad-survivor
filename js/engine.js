@@ -253,6 +253,7 @@ function choose(side) {
   if (gameState.cardCount >= 3 && !gameState.nextMilestone) {
     // Cost of living: -1 wallet each semester
     gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
+    if (gameState.st.wallet <= 0) { gameState.phase='ending'; gameState.ending='broke'; gameState.cause='Wallet'; return render(); }
     gameState.semester++;
     startNextSemester();
   }
