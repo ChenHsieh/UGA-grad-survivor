@@ -21,6 +21,8 @@ __pycache__/
 *.pyo
 .ipynb_checkpoints/
 *.egg-info/
+.venv/
+simulation/.venv/
 
 # Build artifacts
 dist/

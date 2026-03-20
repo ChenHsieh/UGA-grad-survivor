@@ -11,7 +11,7 @@ Swipe left. Swipe right. Try not to lose your mind, your health, your money, or 
 
 ## How to Play
 
-You're a PhD student in bioinformatics at the University of Georgia. Every card presents a situation — swipe left or right to make a choice. Each choice affects your stats:
+You're a bioinformatics PhD student. The game is set at the University of Georgia, but the situations — advisor ghosting, pipeline disasters, stipend anxiety, quals — translate to any computational biology program. Every card presents a situation — swipe left or right to make a choice. Each choice affects your stats:
 
 - 🧠 **Mind** — sanity, focus, will to continue
 - 💪 **Body** — physical health, sleep, energy
@@ -61,9 +61,9 @@ Each ending has its own screen. Dying unlocks new archetypes and advisors — yo
 
 ## 226 Cards
 
-The cards cover the real texture of PhD life: advisor ghosting, pipeline disasters, Athens rent increases, game day parking, the LinkedIn comparison spiral, Reviewer 2, stress baking, and whether to take the side gig.
+The cards cover the real texture of PhD life: advisor ghosting, pipeline disasters, rent increases, game day parking, the LinkedIn comparison spiral, Reviewer 2, stress baking, and whether to take the side gig.
 
-Hyper-specific to UGA bioinformatics by design. If you've ever fought with conda on Sapelo2 or Googled "Athens GA cost of living" after reading your stipend letter — this game was made for you.
+Rooted in UGA bioinformatics — Athens venues, the HPC cluster, rivalry game weekends — but the situations translate to any computational biology PhD. If you've ever fought with conda, watched a p-value land at 0.049, or seen your undergrad classmates get promoted on LinkedIn while you resubmit to Reviewer 2 — this game was made for you.
 
 ## Balance
 

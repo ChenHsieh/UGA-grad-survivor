@@ -229,7 +229,9 @@ function renderEnding() {
     mastered_out: {
       emoji: '📜', title: 'You Got the Master\'s',
       subtitle: `Semester ${sem} · ${runInfo}`,
-      body: 'Nobody calls this failing. The program does, technically. You leave with a master\'s, real expertise, and a clearer sense of what you actually want.',
+      body: gameState.network > 30
+        ? 'The master\'s opens a door your PhD would have kept closed. A contact from the conference two years ago is now a hiring manager. You send one email. They respond in an hour.'
+        : 'The master\'s is real and the expertise is yours. What comes next is less clear. You update your resume. You start from scratch.',
       shareText: `${archName}${piPhrase}. Left with a master\'s in semester ${sem}. Nobody\'s calling it quitting.\nUGA Grad Survivor:`,
     },
     burnt_out: {
@@ -247,7 +249,9 @@ function renderEnding() {
     broke: {
       emoji: '💸', title: 'Financially Liquidated',
       subtitle: `Semester ${sem} · ${runInfo}`,
-      body: 'Your card declined at the vending machine in Brooks Hall. You have $3.47. Your stipend doesn\'t arrive until the 15th. It is the 3rd.',
+      body: gameState.network > 30
+        ? 'An email arrives before your card declines a second time. Someone you met at a poster session has a contract role. Two weeks of work. Enough to breathe. Networks pay out in strange moments.'
+        : 'Your card declined at the vending machine in the department building. You have $3.47. There\'s no one to call. Your stipend doesn\'t arrive until the 15th. It is the 3rd.',
       shareText: `${archName}${piPhrase}. Card declined in semester ${sem}. The stipend wasn\'t enough.\nUGA Grad Survivor:`,
     },
     disappeared: {
@@ -261,6 +265,10 @@ function renderEnding() {
   const d = endingData[ending];
   if (!d) return '<div>Error loading ending.</div>';
 
+  const networkHint = (['mastered_out', 'broke'].includes(ending) && gameState.network <= 30)
+    ? `<div class="network-hint">→ Your network score was low this run. Choices that build professional connections — conferences, LinkedIn, collaborations — unlock a different version of this ending.</div>`
+    : '';
+
   const uniqueSeen = new Set(gameState.memory.filter(m => !m.match(/^(quals_|paper_|committee_|chose_|defense_|defended)/))).size;
   const totalPool = PHASE1_CARDS.length + PHASE2_CARDS.length + PHASE3_CARDS.length + UNIVERSAL_CARDS.length + CALLBACK_CARDS.length + EXCLUSIVE_CARDS.length + PI_EXCLUSIVE_CARDS.length + MILESTONE_CARDS.length;
 
@@ -269,6 +277,7 @@ function renderEnding() {
     <div class="ending-title">${d.title}</div>
     <div class="ending-sub">${d.subtitle}</div>
     <div class="ending-body">${d.body}</div>
+    ${networkHint}
     <div class="ending-stats">
       <div class="stat-line"><span>🧠 Mind</span><span>${gameState.st.mind}</span></div>
       <div class="stat-line"><span>💪 Body</span><span>${gameState.st.body}</span></div>
