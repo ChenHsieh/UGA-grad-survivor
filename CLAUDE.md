@@ -105,9 +105,6 @@ Unlockable: `exploiter` (mastered_out), `dynasty` (defended)
 | `ms_defense_sched` | 9 | Schedule or delay defense |
 | `ms_defense` | 10 | Research ≥ 30 → Defended; else Mastered Out |
 
-### Endings
-🎓 `defended` · 📜 `mastered_out` · 🧠 `burnt_out` · 🏥 `hospitalized` · 💸 `broke` · 👻 `disappeared`
-
 ### Save System
 - `localStorage` key: `uga_grad_survivor_v2`
 - Save schema version: **3** — mismatches reset save data
