@@ -192,15 +192,13 @@ function choose(side) {
   });
 
   // POST-CHOICE ARCHETYPE EFFECTS
-  if (gameState.archetype === 'overachiever') {
-    const weakStats = Object.entries(gameState.st).filter(([s, v]) => v < 20 && s !== 'research');
-    if (weakStats.length > 0) {
-      const [weakStat] = weakStats[Math.floor(Math.random() * weakStats.length)];
-      gameState.st[weakStat] = Math.min(100, gameState.st[weakStat] + 5);
+  if (gameState.archetype === 'overachiever' && gameState.totalCards % 3 === 0) {
+    if (gameState.st.mind < 20) {
+      gameState.st.mind = Math.min(100, gameState.st.mind + 3);
     }
   }
   if (gameState.archetype === 'gym_bro') {
-    if (gameState.st.body < 25) gameState.st.body = 25;
+    if (gameState.st.body < 15) gameState.st.body = 15;
   }
   if (gameState.archetype === 'double_agent') {
     const drainStats = ['mind', 'body', 'wallet', 'bonds'];
@@ -209,7 +207,6 @@ function choose(side) {
   }
 
   // PASSIVE DRAIN: financial stress
-  if (gameState.st.wallet < 5) gameState.st.wallet = 5;
   if (gameState.st.wallet < 20) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 3);
     gameState.st.body = Math.max(0, gameState.st.body - 2);
@@ -230,8 +227,13 @@ function choose(side) {
   }
 
   // GLOBAL STUDENT: visa pressure in late game
-  if (gameState.archetype === 'global_student' && gameState.semester >= 8) {
+  if (gameState.archetype === 'global_student' && gameState.semester >= 6) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 3);
+  }
+
+  // PASSIVE DRAIN: PhD isolation in late game
+  if (gameState.semester >= 6) {
+    gameState.st.bonds = Math.max(0, gameState.st.bonds - 1);
   }
 
   if (card.sets) card.sets.forEach(flag => { if (!gameState.memory.includes(flag)) gameState.memory.push(flag); });
@@ -249,7 +251,8 @@ function choose(side) {
   if (gameState.semester > 10 && !gameState.memory.includes('defended')) { gameState.phase='ending'; gameState.ending='mastered_out'; gameState.cause='Time'; return render(); }
 
   if (gameState.cardCount >= 3 && !gameState.nextMilestone) {
-    // Only advance semester if there's no pending milestone for this semester
+    // Cost of living: -1 wallet each semester
+    gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
     gameState.semester++;
     startNextSemester();
   }
@@ -284,10 +287,10 @@ function applyPerk(arch, stat, delta, card) {
     case 'fun_haver':
       if (stat === 'bonds' && delta > 0) return Math.floor(delta * 1.5);
       if (stat === 'mind' && delta < 0) return Math.floor(delta * 1.3);
-      if (stat === 'research' && delta > 0) return Math.ceil(delta / 2);
+      if (stat === 'research' && delta > 0) return Math.max(1, Math.floor(delta * 0.75));
       break;
     case 'global_student':
-      if (stat === 'bonds' && delta < 0) return Math.ceil(delta / 2);
+      if (stat === 'bonds' && delta < 0) return Math.ceil(delta * 0.75);
       break;
     case 'biologist':
       if (stat === 'research' && delta < 0 && techTags.includes(tag)) {
@@ -330,7 +333,7 @@ function applyPIPerk(piType, stat, delta, card) {
       if (stat === 'bonds' && delta < 0 && isAdvisor) return Math.floor(delta * 1.3);
       break;
     case 'mentor':
-      if (delta < 0 && isAdvisor) return Math.min(delta + 3, 0);
+      if (delta < 0 && isAdvisor) return Math.min(delta + 1, 0);
       if (stat === 'bonds' && delta > 0 && isAdvisor) return Math.floor(delta * 1.2);
       if (stat === 'research' && delta > 0) return Math.min(delta, 10);
       break;
