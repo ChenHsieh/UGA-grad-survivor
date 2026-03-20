@@ -13,6 +13,12 @@ function renderTitle() {
   `;
 }
 
+const ARCH_UNLOCK_HINTS = {
+  double_agent:   'Reach semester 7 in any run',
+  gym_bro:        'Get the Hospitalized ending',
+  neurodivergent: 'Get the Burnt Out ending',
+};
+
 function renderArchetype() {
   const archs = Object.entries(ARCHETYPE_DATA);
   const selectable = getSelectableArchetypes();
@@ -35,7 +41,7 @@ function renderArchetype() {
           <span>🤝 ${s.bonds}</span>
           <span>📊 ${s.research}</span>
         </div>
-        ${locked ? `<div class="arch-locked-msg">🔒 Unlock by playing</div>` : ''}
+        ${locked ? `<div class="arch-locked-msg">🔒 ${ARCH_UNLOCK_HINTS[key] || 'Unlock by playing'}</div>` : ''}
       </div>
     `;
   });
@@ -75,7 +81,7 @@ function renderPISelection() {
         <div class="arch-emoji">${data.emoji}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-desc">${data.desc}</div>
-        ${locked ? `<div class="arch-locked-msg">🔒 Unlock by playing</div>` : ''}
+        ${locked ? `<div class="arch-locked-msg">🔒 ${key === 'exploiter' ? 'Get the Mastered Out ending' : key === 'dynasty' ? 'Get the Defended ending' : 'Unlock by playing'}</div>` : ''}
       </div>
     `;
   });

@@ -144,7 +144,13 @@ Added 7 new universal cards covering two under-represented tensions in computati
 
 ---
 
-## v0.11 — Crimson Theme & OG Image Refresh
+## v0.11 — Unlock Hints & Crimson Theme
+
+**Unlock hints on locked cards:** Locked archetypes and advisors now show their specific unlock condition instead of the generic "Unlock by playing." Double Agent shows "Reach semester 7 in any run"; Gym Bro, Neurodivergent, Exploiter, and Dynasty each name the exact ending required.
+
+---
+
+## v0.12 — Crimson Theme & OG Image Refresh
 2026-03-20 · *co-authored with Claude Sonnet 4.6*
 
 **New "Crimson" theme:** Added a sixth selectable theme — pure black (`#000`), white, and a single sharp red (`#e00020`). No warm tints. Card background is white, accent and danger color are the same red, positive stat bars render in neutral gray. Available from the `?` theme picker as "Crimson."
