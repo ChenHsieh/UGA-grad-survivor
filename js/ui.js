@@ -43,14 +43,30 @@ function renderArchetype() {
   return html;
 }
 
+function renderRotationComplete() {
+  const st = gameState.st;
+  return `<div class="semester-advance-screen">
+    <div class="sem-advance-badge">✓ SEMESTER 1 COMPLETE · ROTATIONS END</div>
+    <div class="sem-advance-done-label">The Naive Years</div>
+    <div class="sem-advance-title">Choose Your Lab</div>
+    <div class="sem-advance-next-label">The Most Important Decision of Your PhD</div>
+    <div class="sem-advance-flavor">You spent the semester rotating through labs. You've seen the famous PI with no time for students. The warm one with no publications. The new one still figuring it out.<br><br>Now you have to commit. One advisor. One research direction. The next four to six years of your life.</div>
+    <div class="sem-advance-stats">
+      <span>🧠 ${st.mind}</span>
+      <span>💪 ${st.body}</span>
+      <span>💰 ${st.wallet}</span>
+      <span>🤝 ${st.bonds}</span>
+      <span>📊 ${st.research}</span>
+    </div>
+    <button class="sem-advance-btn" onclick="continueToPI()">Choose Your Advisor →</button>
+    <div style="font-size:9px;color:#3a3530;margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
+  </div>`;
+}
+
 function renderPISelection() {
   const pis = Object.entries(PI_DATA);
   const unlocked = save.unlockedPIs || ['micromanager', 'ghost', 'mentor', 'new_pi'];
   let html = `<div class="archetype-screen">
-    <div class="rotation-complete-banner">
-      <div class="rotation-badge">📋 ROTATION COMPLETE · SEMESTER 1</div>
-      <div class="rotation-context">You spent a semester meeting professors, sitting through awkward lab coffees, and learning which research directions actually excite you. Now you have to commit. This relationship shapes the next 4–6 years.</div>
-    </div>
     <div class="screen-title">Choose Your Advisor</div>
     <div class="screen-sub">↑↓ or W/S to browse · Space to select</div>`;
   pis.forEach(([key, data]) => {
@@ -79,7 +95,7 @@ function renderSemesterAdvance() {
   const flavors = {
     3: "First year is officially behind you. The qualifying exam is out there, somewhere in the fog.",
     4: "The grind is real. Your brain hurts in a productive way. Quals are coming.",
-    5: "Deep in it now. The dissertation is real, if not finished.",
+    5: "Post-quals. The project is yours now. Nobody tells you what to do next.",
     6: "Committee season. Everyone wants a progress report. You have a PowerPoint.",
     7: "You've been here long enough to have strong opinions about the grad lounge coffee.",
     8: "The end is theoretically visible. You've written more than you ever thought possible.",
@@ -171,42 +187,47 @@ function renderEnding() {
   const networkMsg = gameState.network > 30
     ? 'Recruiters are lining up. Your LinkedIn is ready.<br><br><em>Coming soon: Industry Escape Room</em>'
     : 'You have the degree but not many leads.<br><br><em>Coming soon: Post-Doc Purgatory</em>';
+  const archName = ARCHETYPE_DATA[gameState.archetype]?.name || 'Unknown';
+  const piName = gameState.piType ? PI_DATA[gameState.piType]?.name : null;
+  const runInfo = piName ? `${archName} · ${piName}` : archName;
+  const sem = gameState.semester;
+  const cards = gameState.totalCards;
   const endingData = {
     defended: {
       emoji: '🎓', title: 'Dr. You',
-      subtitle: `Semester ${gameState.semester}, ${ARCHETYPE_DATA[gameState.archetype]?.name || 'Unknown'}${gameState.piType ? ' · ' + PI_DATA[gameState.piType]?.name : ''}`,
+      subtitle: `Semester ${sem} · ${runInfo}`,
       body: `You stood in front of your committee and defended your research. There were hard questions. You answered most of them. They approved you anyway. Dr. is a title you now possess.<br><br>${networkMsg}`,
-      shareText: `I defended my PhD in UGA Grad Survivor. ${gameState.totalCards} cards. ${ARCHETYPE_DATA[gameState.archetype]?.name || ''}. Try it: `,
+      shareText: `Defended. ${runInfo}. Semester ${sem}/10, ${cards} cards played.\nUGA Grad Survivor:`,
     },
     mastered_out: {
       emoji: '📜', title: 'You Got the Master\'s',
-      subtitle: `Semester ${gameState.semester} · ${gameState.cause || 'The PhD wasn\'t the path'}`,
-      body: 'Nobody calls this failing. The program does, technically. You leave with a degree, real expertise, and the knowledge that the system wasn\'t built for everyone to stay.<br><br>PhD isn\'t for everyone. And that\'s okay.',
-      shareText: `I mastered out in semester ${gameState.semester} of UGA Grad Survivor. 40-50% of PhD students leave before finishing. Try it: `,
+      subtitle: `Semester ${sem} · ${runInfo}`,
+      body: 'Nobody calls this failing. The program does, technically. You leave with a master\'s, real expertise, and a clearer sense of what you actually want.',
+      shareText: `Mastered out in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
     burnt_out: {
       emoji: '🧠', title: 'Burnt Out',
-      subtitle: `Semester ${gameState.semester} · ${gameState.cause || 'Mental health collapse'}`,
-      body: 'The system broke you. It\'s not a failure of will — it\'s a failure of design. The stipend doesn\'t cover rent. The workload doesn\'t stop. Your mind needed rest it never got.',
-      shareText: `I burnt out in semester ${gameState.semester} of UGA Grad Survivor. 47% of grad students report mental health crises. Try it: `,
+      subtitle: `Semester ${sem} · ${runInfo}`,
+      body: 'The 2am sessions. The unanswered emails. The feedback that felt more like verdict than guidance. It accumulated until it didn\'t. Your mind needed rest. The program didn\'t stop to notice.',
+      shareText: `Burnt out in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
     hospitalized: {
       emoji: '🏥', title: 'Hospitalized',
-      subtitle: `Semester ${gameState.semester} · ${gameState.cause || 'Physical collapse'}`,
-      body: 'Your body filed a formal complaint. The all-nighters, the skipped meals, the stress — it all came due at once. The ER copay is $500. Your advisor asks when you\'ll be back.',
-      shareText: `Hospitalized in semester ${gameState.semester} of UGA Grad Survivor. Your body keeps the score. Try it: `,
+      subtitle: `Semester ${sem} · ${runInfo}`,
+      body: 'Your body filed a formal complaint. The all-nighters, the skipped meals, the stress — it all came due at once. The ER copay was $500. Your advisor asked when you\'d be back.',
+      shareText: `Hospitalized in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
     broke: {
       emoji: '💸', title: 'Financially Liquidated',
-      subtitle: `Semester ${gameState.semester}, ${ARCHETYPE_DATA[gameState.archetype]?.name || 'Unknown'}`,
+      subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'Your card declined at the vending machine in Brooks Hall. You have $3.47. Your stipend doesn\'t arrive until the 15th. It is the 3rd.',
-      shareText: `My card declined in UGA Grad Survivor. Stipend: $21,459/yr. Athens rent: $14,820/yr. Try it: `,
+      shareText: `Ran out of money in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
     disappeared: {
       emoji: '👻', title: 'Disappeared',
-      subtitle: `Semester ${gameState.semester} · Total isolation`,
+      subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'You stopped responding to messages. You stopped showing up to lab meeting. One day your desk was empty. Nobody knows when exactly you left. The department sent one email. Nobody followed up.',
-      shareText: `I disappeared in semester ${gameState.semester} of UGA Grad Survivor. Sometimes people just stop showing up. Try it: `,
+      shareText: `Disappeared in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
   };
 
@@ -290,6 +311,7 @@ function render() {
   if (gameState.phase === 'title') app.innerHTML = renderTitle();
   else if (gameState.phase === 'archetype') app.innerHTML = renderArchetype();
   else if (gameState.phase === 'pi_selection') app.innerHTML = renderPISelection();
+  else if (gameState.phase === 'rotation_complete') app.innerHTML = renderRotationComplete();
   else if (gameState.phase === 'semester_advance') app.innerHTML = renderSemesterAdvance();
   else if (gameState.phase === 'play') app.innerHTML = renderPlay();
   else if (gameState.phase === 'ending') app.innerHTML = renderEnding();

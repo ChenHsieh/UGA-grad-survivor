@@ -115,6 +115,15 @@ document.addEventListener('keydown', function(e) {
     return;
   }
 
+  // ROTATION COMPLETE TRANSITION: Space/Enter to continue to PI selection
+  if (gameState.phase === 'rotation_complete') {
+    if (key === ' ' || key === 'Enter') {
+      e.preventDefault();
+      continueToPI();
+    }
+    return;
+  }
+
   // SEMESTER ADVANCE CHECKPOINT: Space/Enter to continue
   if (gameState.phase === 'semester_advance') {
     if (key === ' ' || key === 'Enter') {

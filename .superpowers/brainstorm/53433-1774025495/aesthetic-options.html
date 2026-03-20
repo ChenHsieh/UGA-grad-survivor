@@ -1,0 +1,226 @@
+<h2>Which vibe fits the game better?</h2>
+<p class="subtitle">Current look: warm dark academic (gold + parchment + serif). Pick a direction to explore.</p>
+
+<style>
+.ae-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+.ae-card {
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: border-color 0.2s, transform 0.15s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.ae-card:hover { transform: translateY(-3px); }
+.ae-card.selected { border-color: #fff !important; }
+
+.ae-preview {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.ae-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 4px;
+  opacity: 0.7;
+}
+.ae-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+.ae-body {
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.8;
+  flex: 1;
+}
+.ae-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ae-btn {
+  flex: 1;
+  padding: 6px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  border: 1.5px solid;
+}
+.ae-name {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px;
+  letter-spacing: 1px;
+}
+.ae-desc {
+  font-size: 11px;
+  text-align: center;
+  padding: 0 10px 10px;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+/* Option A: Terminal Hacker */
+.term { background: #0a0a0a; font-family: 'Courier New', monospace; }
+.term .ae-preview { background: #0a0a0a; border-bottom: 1px solid #1a3a1a; }
+.term .ae-label { color: #00ff41; font-family: monospace; }
+.term .ae-title { color: #00ff41; text-shadow: 0 0 8px rgba(0,255,65,0.5); }
+.term .ae-body { color: #a0ffa8; font-family: monospace; font-size: 11px; }
+.term .ae-btn { border-color: #00ff41; color: #00ff41; background: transparent; font-family: monospace; }
+.term .ae-name { color: #00ff41; background: #0a0a0a; }
+.term .ae-desc { color: #4a7a4a; background: #0a0a0a; }
+.term .scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  pointer-events: none;
+}
+
+/* Option B: Lo-fi Zine */
+.zine { background: #f0e8d8; font-family: Georgia, serif; }
+.zine .ae-preview { background: #f0e8d8; border-bottom: 2px solid #2a2a2a; }
+.zine .ae-label { color: #2a2a2a; font-family: 'Courier New', monospace; font-size: 10px; }
+.zine .ae-title { color: #1a1a1a; font-size: 18px; }
+.zine .ae-body { color: #3a3030; font-family: Georgia, serif; }
+.zine .ae-btn { border-color: #2a2a2a; color: #2a2a2a; background: transparent; font-family: 'Courier New', monospace; }
+.zine .ae-btn:first-child { background: #2a2a2a; color: #f0e8d8; }
+.zine .ae-name { color: #1a1a1a; background: #f0e8d8; }
+.zine .ae-desc { color: #5a5050; background: #f0e8d8; }
+.zine .stamp {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 40px; height: 40px;
+  border: 2px solid #c0392b;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
+  color: #c0392b;
+  text-align: center;
+  line-height: 1.1;
+  transform: rotate(12deg);
+  opacity: 0.6;
+}
+
+/* Option C: Institutional Horror */
+.cold { background: #1a1e26; font-family: 'Arial', sans-serif; }
+.cold .ae-preview { background: #1a1e26; border-bottom: 1px solid #2a3a4a; }
+.cold .ae-label { color: #5a8aaa; font-size: 9px; letter-spacing: 3px; }
+.cold .ae-title { color: #c0d0e0; font-weight: 400; font-size: 16px; }
+.cold .ae-body { color: #7a90a0; font-size: 11px; font-family: Arial, sans-serif; }
+.cold .ae-btn { border-color: #2a4a6a; color: #5a8aaa; background: transparent; }
+.cold .ae-btn:last-child { background: #2a4a6a; color: #c0d0e0; border-color: #2a4a6a; }
+.cold .ae-name { color: #7a9aaa; background: #1a1e26; }
+.cold .ae-desc { color: #3a5060; background: #1a1e26; }
+.cold .form-id {
+  position: absolute; bottom: 50px; right: 12px;
+  font-size: 9px; color: #2a4a6a; font-family: monospace;
+  letter-spacing: 1px;
+}
+
+/* Option D: Pixel Retro */
+.pixel { background: #1a0a2e; font-family: monospace; }
+.pixel .ae-preview { background: #1a0a2e; border-bottom: 3px solid #ff6bff; image-rendering: pixelated; }
+.pixel .ae-label { color: #ff6bff; font-family: monospace; font-size: 10px; }
+.pixel .ae-title { color: #fffb00; font-size: 16px; text-shadow: 2px 2px 0 #7700cc; }
+.pixel .ae-body { color: #c0b0ff; font-size: 11px; font-family: monospace; }
+.pixel .ae-btn { border-color: transparent; color: #1a0a2e; font-family: monospace; border-radius: 2px; }
+.pixel .ae-btn:first-child { background: #44ff44; }
+.pixel .ae-btn:last-child { background: #ff4444; }
+.pixel .ae-name { color: #ff6bff; background: #1a0a2e; }
+.pixel .ae-desc { color: #6040a0; background: #1a0a2e; }
+.pixel .ae-preview::before {
+  content: '●●●';
+  position: absolute;
+  top: 6px; right: 10px;
+  font-size: 8px;
+  color: #ff6bff;
+  letter-spacing: 3px;
+}
+</style>
+
+<div class="ae-grid">
+
+  <!-- A: Terminal/Hacker -->
+  <div class="ae-card term" data-choice="terminal" onclick="toggleSelect(this)">
+    <div class="ae-preview scanlines">
+      <div class="ae-label">$ advisor_meeting.sh</div>
+      <div class="ae-title">The Meeting</div>
+      <div class="ae-body">Your advisor wants to discuss your "lack of progress." You haven't published in 8 months.</div>
+      <div class="ae-buttons">
+        <div class="ae-btn">[ defend ]</div>
+        <div class="ae-btn">[ apologize ]</div>
+      </div>
+    </div>
+    <div class="ae-name">TERMINAL / HACKER</div>
+    <div class="ae-desc">Green-on-black, CRT glow, monospace only. Lean into the coder PhD identity.</div>
+  </div>
+
+  <!-- B: Lo-fi Zine -->
+  <div class="ae-card zine" data-choice="zine" onclick="toggleSelect(this)">
+    <div class="ae-preview" style="position:relative">
+      <div class="stamp">GRAD<br>LIFE</div>
+      <div class="ae-label">Advisor Drama</div>
+      <div class="ae-title">The Meeting</div>
+      <div class="ae-body">Your advisor wants to discuss your "lack of progress." You haven't published in 8 months.</div>
+      <div class="ae-buttons">
+        <div class="ae-btn">Defend yourself</div>
+        <div class="ae-btn">Apologize</div>
+      </div>
+    </div>
+    <div class="ae-name" style="color:#1a1a1a; background:#f0e8d8;">LO-FI ZINE</div>
+    <div class="ae-desc" style="color:#5a5050; background:#f0e8d8;">Light paper tones, ink-on-newsprint. Feels like a hand-stapled grad school humor mag.</div>
+  </div>
+
+  <!-- C: Institutional Horror -->
+  <div class="ae-card cold" data-choice="cold" onclick="toggleSelect(this)">
+    <div class="ae-preview" style="position:relative">
+      <div class="ae-label">FORM UGA-7C · INCIDENT REPORT</div>
+      <div class="ae-title">The Meeting</div>
+      <div class="ae-body">Your advisor wants to discuss your "lack of progress." You haven't published in 8 months.</div>
+      <div class="form-id">REF: 2024-0847-B</div>
+      <div class="ae-buttons">
+        <div class="ae-btn">Respond</div>
+        <div class="ae-btn">Defer</div>
+      </div>
+    </div>
+    <div class="ae-name">INSTITUTIONAL COLD</div>
+    <div class="ae-desc">Steel-blue bureaucratic dread. Makes the PhD feel like a Kafkaesque paper trail.</div>
+  </div>
+
+  <!-- D: Pixel Retro -->
+  <div class="ae-card pixel" data-choice="pixel" onclick="toggleSelect(this)">
+    <div class="ae-preview">
+      <div class="ae-label">QUEST EVENT</div>
+      <div class="ae-title">THE MEETING</div>
+      <div class="ae-body">Your advisor wants to discuss your "lack of progress." You haven't published in 8 months.</div>
+      <div class="ae-buttons">
+        <div class="ae-btn">YES</div>
+        <div class="ae-btn">NO</div>
+      </div>
+    </div>
+    <div class="ae-name">PIXEL / RETRO RPG</div>
+    <div class="ae-desc">8-bit palette, chunky type, game-show energy. Leans fully into the "game" framing.</div>
+  </div>
+
+</div>

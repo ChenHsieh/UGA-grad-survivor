@@ -43,6 +43,21 @@ Driven by a 96,000-run simulation: overall defense rate was 59.3% (too easy), Ov
 
 ---
 
+## v0.5 — Narrative Polish
+2026-03-20 · *co-authored with Claude Sonnet 4.6*
+
+**Card timing fixes:** Added `minSem` to 8 cards whose flavor text referenced events that couldn't have happened yet — dissertation writing, published papers, committee, quals — preventing them from surfacing in semester 1 or 2.
+
+**Rotation transition screen:** Added a dedicated `rotation_complete` transition between the end of semester 1 and the PI selection screen, giving the lab-choice decision the narrative weight it deserves.
+
+**Ending screen polish:** All 6 share texts now include archetype, PI, semester, and card count in a consistent format. Removed wrong stipend figure from the Broke share text. Rewrote `mastered_out` and `burnt_out` body copy to be observational rather than editorializing.
+
+**Sentence-level prose:** Fixed 9 cards with choppy all-short-sentence body text by combining clauses — preserving the dry deadpan voice without the staccato rhythm.
+
+**Semester 5 transition:** Fixed flavor text that said "the dissertation is real" at a point when no one is writing a dissertation yet.
+
+---
+
 ## vNext — Secret Diary Cards *(planned)*
 
 A hidden card layer: personal journal entries that surface based on accumulated run history, offering narrative reflection and small stat effects.

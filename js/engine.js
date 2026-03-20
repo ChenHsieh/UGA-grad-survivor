@@ -89,10 +89,9 @@ function drawCard() {
   if (gameState.cardCount >= 3 && gameState.nextMilestone) {
     const ms = gameState.nextMilestone;
     gameState.nextMilestone = null;
-    // PI selection milestone triggers special UI
+    // PI selection milestone triggers transition → then PI selection
     if (ms.piSelection) {
-      gameState.phase = 'pi_selection';
-      menuIndex = 0;
+      gameState.phase = 'rotation_complete';
       return null;
     }
     // Committee meeting: research check affects mind
@@ -278,6 +277,14 @@ function continueSemester() {
   gameState.phase = 'play';
   gameState.currentCard = drawCard(); // drawCard() may override phase to pi_selection
   render();
+}
+
+// Called from rotation_complete transition screen
+function continueToPI() {
+  gameState.phase = 'pi_selection';
+  menuIndex = 0;
+  render();
+  setTimeout(() => highlightArchetype(0), 50);
 }
 
 // PI SELECTION

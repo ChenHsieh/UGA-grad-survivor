@@ -11,28 +11,25 @@ Swipe left. Swipe right. Try not to lose your mind, your health, your money, or 
 
 ## How to Play
 
-You're a PhD student in bioinformatics at the University of Georgia. Every card presents a situation — swipe left or right to make a choice. Each choice affects your four stats:
+You're a PhD student in bioinformatics at the University of Georgia. Every card presents a situation — swipe left or right to make a choice. Each choice affects your stats:
 
 - 🧠 **Mind** — sanity, focus, will to continue
 - 💪 **Body** — physical health, sleep, energy
 - 💰 **Wallet** — money, funding, financial stability
 - 🤝 **Bonds** — all relationships (advisor, friends, cohort, family)
+- 📊 **Research** — academic output; gated at milestone checkpoints
 
-If any stat hits zero, your PhD is over. Survive 10 semesters and defend your dissertation to win.
+If any of the first four stats hits zero, your PhD is over. Keep Research high enough to pass milestones. Survive 10 semesters and defend your dissertation to win.
 
 ## Choose Who You Are
 
-**📈 The Overachiever** — First in, last out. Your desk has a ring light. You've applied to every fellowship. When things get bad, you just work harder. That's your gift and your problem.
+**📈 Overachiever** · **💻 Vibe Coder** · **🎉 Fun Haver** · **🌍 Global Student** · **🧬 Biologist** — available from the start.
 
-**🎭 The Imposter** — Everyone else seems to understand what's going on. You don't. You compensate by being likeable and never letting anyone see you struggle. The mask is heavy.
+**🕵️ Double Agent** · **🏋️ Gym Bro** · **🧩 Neurodivergent** — unlocked by reaching specific endings.
 
-**🛋️ The Coaster** — You're here for the degree, not the drama. Lab meetings are a suggestion. Your mental health is great. Your bank account is not.
+After semester 1 rotations you also choose your **advisor type** (Micromanager, Ghost, Mentor, New PI, and two more unlocked by play), each with persistent perks that affect the rest of your run.
 
-**🔬 The True Believer** — You actually love your research. You have a favorite gene. This is simultaneously your greatest strength and the thing that will nearly destroy you.
-
-**✊ The Organizer** — You figured out that the system doesn't break individuals by accident. When you invest in people, the whole lab gets stronger. Unlocks cards about the real fight for better pay.
-
-Not all archetypes are available from the start. Each death unlocks something new.
+Not all archetypes or advisors are available from the start. Dying unlocks something new.
 
 ## Game Structure
 
@@ -48,41 +45,40 @@ Milestone cards appear at phase boundaries — qualifying exam, paper submission
 
 ## Six Ways It Ends
 
-🎓 **Defended** — You made it. Walk across the stage. Then read what it actually cost.
+🎓 **Defended** — You made it.
 
 📜 **Mastered Out** — You leave with a master's. Nobody calls it failing. The program does, technically.
 
-💼 **Left for Industry** — The recruiter offered 4x your stipend. You did the math.
+🧠 **Burnt Out** — The pressure accumulated quietly, then all at once.
 
-📂 **All But Dissertation** — You did the work. You just never finished the document. It happens more than anyone admits.
+🏥 **Hospitalized** — Your body filed a formal complaint.
 
-🛌 **Burned Out** — Your body filed a formal complaint.
+💸 **Broke** — Your card declined at the vending machine. Your stipend doesn't arrive until the 15th. It is the 3rd.
 
-🪙 **Broke** — Rare, because usually the money problems burn you out before the account actually hits zero. But sometimes the math just doesn't work.
+👻 **Disappeared** — You stopped showing up. Nobody followed up.
 
-Each ending has its own screen. Some include real numbers. Dying unlocks new archetypes and new endings — you're meant to play more than once.
+Each ending has its own screen. Dying unlocks new archetypes and advisors — you're meant to play more than once.
 
-## 131 Cards
+## 226 Cards
 
-The cards cover the real texture of PhD life: advisor ghosting, pipeline disasters, Athens rent increases, the NIH funding crisis, game day parking, stress baking, the LinkedIn comparison spiral, UCWGA organizing, and whether to take the side gig.
+The cards cover the real texture of PhD life: advisor ghosting, pipeline disasters, Athens rent increases, game day parking, the LinkedIn comparison spiral, Reviewer 2, stress baking, and whether to take the side gig.
 
-Cards are hyper-specific to UGA bioinformatics by design. If you've ever fought with conda environments on Sapelo2, argued with Reviewer 2, or Googled "Athens GA cost of living" after reading your stipend letter — this game was made for you.
+Hyper-specific to UGA bioinformatics by design. If you've ever fought with conda on Sapelo2 or Googled "Athens GA cost of living" after reading your stipend letter — this game was made for you.
 
 ## Balance
 
-Calibrated against real PhD attrition data ([CGS](https://cgsnet.org), [Nature 2022 survey](https://www.nature.com/articles/d41586-022-03394-0)):
+Calibrated via 96,000-run Monte Carlo simulation against real PhD attrition data ([CGS](https://cgsnet.org), [Nature 2022 survey](https://www.nature.com/articles/d41586-022-03394-0)):
 
-- Random play wins ~10% of the time. Strategic play wins ~70–98%.
-- Financial stress is the background radiation, not usually the direct killer — it drains Mind and Body over time, matching how real grad student attrition works.
-- The Imposter is the hardest archetype. The Coaster is the easiest. This is intentional.
+- Overall defense rate ~54%. Random play wins far less; strategic play can reach ~80%+.
+- Financial stress is background radiation — it drains Mind and Body over time rather than killing directly, matching real attrition patterns.
 
 ## Tech
 
-Zero dependencies. Single HTML file. No build step.
+Zero dependencies. No build step.
 
-- Vanilla JS + CSS
-- Touch swipe + mouse drag + button fallback
-- 131 unique cards across 7 pools (3 phases + universal + callbacks + organizer-exclusive + milestones)
+- Vanilla JS + CSS split across `js/engine.js`, `js/ui.js`, `js/controls.js`, `js/data/`
+- Touch swipe + mouse drag + keyboard controls
+- 226 cards across 8 pools (3 phases + universal + callbacks + archetype/PI exclusives + milestones)
 - localStorage for unlock persistence
 - Mobile-first responsive design
 
@@ -111,7 +107,7 @@ If you're a grad student and have a scenario that belongs in this game, open an 
   eL:{ mind:-10, bonds:+5 }, eR:{ wallet:-8, body:+10 } }
 ```
 
-Stats: `mind`, `body`, `wallet`, `bonds`. Max swing ±20 per stat. Every card should have at least one choice with a net positive.
+Stats: `mind`, `body`, `wallet`, `bonds`, `research`. Max swing ±20 per stat. Every card should have at least one choice with a net positive.
 
 ## Credits
 
