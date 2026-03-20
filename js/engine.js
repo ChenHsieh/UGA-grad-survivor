@@ -308,11 +308,10 @@ function applyPerk(arch, stat, delta, card) {
       break;
     case 'vibe_coder':
       if (techTags.includes(tag) && delta > 0) return Math.floor(delta * 1.5);
-      if (socialTags.includes(tag) && delta < 0) return Math.floor(delta * 1.5);
+      if (socialTags.includes(tag) && delta < 0) return Math.floor(delta * 1.3);
       break;
     case 'fun_haver':
       if (stat === 'bonds' && delta > 0) return Math.floor(delta * 1.5);
-      if (stat === 'mind' && delta < 0) return Math.floor(delta * 1.3);
       if (stat === 'research' && delta > 0) return Math.max(1, Math.floor(delta * 0.75));
       break;
     case 'global_student':
@@ -330,12 +329,12 @@ function applyPerk(arch, stat, delta, card) {
       // Random drain handled in choose()
       break;
     case 'gym_bro':
-      if (stat === 'wallet' && delta < 0) return Math.floor(delta * 1.3);
-      if (stat === 'mind' && delta < 0) return Math.floor(delta * 1.3);
+      if (stat === 'wallet' && delta < 0) return Math.floor(delta * 1.15);
+      if (stat === 'mind' && delta < 0) return Math.floor(delta * 1.15);
       // Body floor handled in choose()
       break;
     case 'neurodivergent':
-      if (stat === 'mind') return Math.floor(delta * 1.5);
+      if (stat === 'mind') return Math.floor(delta * 1.3);
       if (stat === 'research') return Math.floor(delta * 1.3);
       break;
   }
