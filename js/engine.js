@@ -5,7 +5,7 @@ const SAVE_KEY = 'uga_grad_survivor_v2';
 let save = { version: 3, endings: [], archetypes: ['overachiever', 'vibe_coder', 'fun_haver', 'global_student', 'biologist'], unlockedPIs: ['micromanager', 'ghost', 'mentor', 'new_pi'], totalRuns: 0, totalDeaths: 0, bestSemester: 0 };
 let gameState = {
   phase: 'title', archetype: null, piType: null, st: {mind:50, body:50, wallet:50, bonds:50, research:50}, semester: 1, cardCount: 0,
-  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null
+  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null
 };
 
 function getPhase(semester) {
@@ -251,14 +251,32 @@ function choose(side) {
   if (gameState.semester > 10 && !gameState.memory.includes('defended')) { gameState.phase='ending'; gameState.ending='mastered_out'; gameState.cause='Time'; return render(); }
 
   if (gameState.cardCount >= 3 && !gameState.nextMilestone) {
-    // Cost of living: -1 wallet each semester
-    gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
-    if (gameState.st.wallet <= 0) { gameState.phase='ending'; gameState.ending='broke'; gameState.cause='Wallet'; return render(); }
-    gameState.semester++;
-    startNextSemester();
+    const nextSem = gameState.semester + 1;
+    if (nextSem > 10) {
+      // Safety: should have already ended via defense or mastered_out checks above
+      gameState.phase = 'ending'; gameState.ending = 'mastered_out'; gameState.cause = 'Time'; return render();
+    }
+    gameState.nextSemester = nextSem;
+    gameState.phase = 'semester_advance';
+    render();
+    return;
   }
 
   gameState.currentCard = drawCard();
+  render();
+}
+
+// Called from semester advance checkpoint screen
+function continueSemester() {
+  // Cost of living: -1 wallet each semester
+  gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
+  if (gameState.st.wallet <= 0) { gameState.phase='ending'; gameState.ending='broke'; gameState.cause='Wallet'; return render(); }
+  gameState.semester = gameState.nextSemester;
+  gameState.nextSemester = null;
+  gameState.cardCount = 0;
+  startNextSemester();
+  gameState.phase = 'play';
+  gameState.currentCard = drawCard(); // drawCard() may override phase to pi_selection
   render();
 }
 

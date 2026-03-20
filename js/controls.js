@@ -115,6 +115,15 @@ document.addEventListener('keydown', function(e) {
     return;
   }
 
+  // SEMESTER ADVANCE CHECKPOINT: Space/Enter to continue
+  if (gameState.phase === 'semester_advance') {
+    if (key === ' ' || key === 'Enter') {
+      e.preventDefault();
+      continueSemester();
+    }
+    return;
+  }
+
   // PLAY SCREEN: Left/Right/A/D to choose, ? for help
   if (gameState.phase === 'play' && gameState.currentCard) {
     if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
