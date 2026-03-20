@@ -56,10 +56,9 @@ function renderRotationComplete() {
       <span>💪 ${st.body}</span>
       <span>💰 ${st.wallet}</span>
       <span>🤝 ${st.bonds}</span>
-      <span>📊 ${st.research}</span>
     </div>
     <button class="sem-advance-btn" onclick="continueToPI()">Choose Your Advisor →</button>
-    <div style="font-size:9px;color:#3a3530;margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
+    <div style="font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
   </div>`;
 }
 
@@ -114,21 +113,22 @@ function renderSemesterAdvance() {
       <span>💪 ${st.body}</span>
       <span>💰 ${st.wallet}</span>
       <span>🤝 ${st.bonds}</span>
-      <span>📊 ${st.research}</span>
     </div>
     <div class="sem-advance-cost">Cost of living: Wallet −1</div>
     <button class="sem-advance-btn" onclick="continueSemester()">Enter Semester ${next} →</button>
-    <div style="font-size:9px;color:#3a3530;margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
+    <div style="font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
   </div>`;
 }
 
 function fxHints(fx) {
   if (!fx) return '';
-  const icons = {mind:'🧠', body:'💪', wallet:'💰', bonds:'🤝', research:'📊'};
-  return '<div class="fx-hints">' + Object.entries(fx).map(([k,v]) => {
+  const icons = {mind:'🧠', body:'💪', wallet:'💰', bonds:'🤝'};
+  const visible = Object.entries(fx).filter(([k]) => icons[k]);
+  if (!visible.length) return '';
+  return '<div class="fx-hints">' + visible.map(([k,v]) => {
     const arrow = v > 0 ? '↑' : '↓';
     const cls = v > 0 ? 'up' : 'down';
-    return `<span class="fx-hint ${cls}">${icons[k]||k}${arrow}</span>`;
+    return `<span class="fx-hint ${cls}">${icons[k]}${arrow}</span>`;
   }).join('') + '</div>';
 }
 
@@ -151,14 +151,38 @@ function renderPlay() {
 
   const statDefs = [
     {key:'mind', emoji:'🧠', name:'Mind'}, {key:'body', emoji:'💪', name:'Body'},
-    {key:'wallet', emoji:'💰', name:'Wallet'}, {key:'bonds', emoji:'🤝', name:'Bonds'},
-    {key:'research', emoji:'📊', name:'Research'}
+    {key:'wallet', emoji:'💰', name:'Wallet'}, {key:'bonds', emoji:'🤝', name:'Bonds'}
   ];
   html += `<div class="stats-bar">${statDefs.map(s => {
     const v = gameState.st[s.key];
     const zone = v > 50 ? 'green' : v > 25 ? 'yellow' : 'red';
     return `<div class="stat-item"><div class="stat-top"><span class="stat-emoji">${s.emoji}</span><span class="stat-name">${s.name}</span><span class="stat-value">${v}</span></div><div class="stat-bar ${zone}"><div class="stat-fill" style="width:${v}%"></div></div></div>`;
   }).join('')}</div>`;
+
+  const researchThresholds = {ms_quals: gameState.archetype === 'biologist' ? 30 : 25, ms_committee_1: 25, ms_committee_2: 35, ms_defense: 30};
+  if (card.milestone && researchThresholds[card.id] !== undefined) {
+    const threshold = researchThresholds[card.id];
+    const val = gameState.st.research;
+    const ok = val >= threshold;
+    html += `<div class="research-reveal ${ok ? 'ok' : 'warn'}">📊 Research: <strong>${val}</strong> <span class="research-threshold">· ${threshold} required</span></div>`;
+  }
+
+  const networkFlavor = {
+    ms_committee_1: [
+      { min: 45, text: 'One committee member mentioned a contact at a biotech firm in passing. You filed it away.' },
+      { min: 20, text: 'Your committee is academically sharp. Outside of academia, the network is thinner.' },
+      { min: 0,  text: 'You realize you don\'t know anyone outside this department. The committee doesn\'t either.' }
+    ],
+    ms_defense_sched: [
+      { min: 50, text: 'People at conferences know your name. The job search has already started informally.' },
+      { min: 25, text: 'You have some contacts. The market will tell you if it\'s enough.' },
+      { min: 0,  text: 'The network you haven\'t built is starting to feel like the kind of thing that matters.' }
+    ]
+  };
+  if (card.milestone && networkFlavor[card.id]) {
+    const hint = networkFlavor[card.id].find(t => gameState.network >= t.min);
+    if (hint) html += `<div class="network-flavor">${hint.text}</div>`;
+  }
 
   html += `<div class="card-container">
     <div class="card-ghost"></div>
@@ -184,12 +208,15 @@ function renderPlay() {
 
 function renderEnding() {
   const ending = gameState.ending;
-  const networkMsg = gameState.network > 30
-    ? 'Recruiters are lining up. Your LinkedIn is ready.<br><br><em>Coming soon: Industry Escape Room</em>'
-    : 'You have the degree but not many leads.<br><br><em>Coming soon: Post-Doc Purgatory</em>';
+  const networkMsg = gameState.network > 50
+    ? 'Multiple paths are open. Industry reached out before you even updated your LinkedIn. The degree and the network landed at the same time.<br><br><em>Coming soon: Industry Escape Room</em>'
+    : gameState.network > 25
+    ? 'You have a few leads — people who remember your name from conferences, a cold email that got a warm reply. It\'s enough to start.<br><br><em>Coming soon: Post-Doc Purgatory</em>'
+    : 'The degree is real. The network isn\'t there yet. You\'ll spend the next few months explaining your work to people who weren\'t in the room.<br><br><em>Coming soon: Post-Doc Purgatory</em>';
   const archName = ARCHETYPE_DATA[gameState.archetype]?.name || 'Unknown';
   const piName = gameState.piType ? PI_DATA[gameState.piType]?.name : null;
   const runInfo = piName ? `${archName} · ${piName}` : archName;
+  const piPhrase = piName ? ` under ${piName}` : '';
   const sem = gameState.semester;
   const cards = gameState.totalCards;
   const endingData = {
@@ -197,37 +224,37 @@ function renderEnding() {
       emoji: '🎓', title: 'Dr. You',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: `You stood in front of your committee and defended your research. There were hard questions. You answered most of them. They approved you anyway. Dr. is a title you now possess.<br><br>${networkMsg}`,
-      shareText: `Defended. ${runInfo}. Semester ${sem}/10, ${cards} cards played.\nUGA Grad Survivor:`,
+      shareText: `Played ${archName}${piPhrase} and actually made it to defense. Semester ${sem}, ${cards} cards.\nUGA Grad Survivor:`,
     },
     mastered_out: {
       emoji: '📜', title: 'You Got the Master\'s',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'Nobody calls this failing. The program does, technically. You leave with a master\'s, real expertise, and a clearer sense of what you actually want.',
-      shareText: `Mastered out in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
+      shareText: `${archName}${piPhrase}. Left with a master\'s in semester ${sem}. Nobody\'s calling it quitting.\nUGA Grad Survivor:`,
     },
     burnt_out: {
       emoji: '🧠', title: 'Burnt Out',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'The 2am sessions. The unanswered emails. The feedback that felt more like verdict than guidance. It accumulated until it didn\'t. Your mind needed rest. The program didn\'t stop to notice.',
-      shareText: `Burnt out in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
+      shareText: `${archName}${piPhrase}. The mind gave out in semester ${sem}. ${cards} cards deep.\nUGA Grad Survivor:`,
     },
     hospitalized: {
       emoji: '🏥', title: 'Hospitalized',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'Your body filed a formal complaint. The all-nighters, the skipped meals, the stress — it all came due at once. The ER copay was $500. Your advisor asked when you\'d be back.',
-      shareText: `Hospitalized in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
+      shareText: `${archName}${piPhrase}. Body filed a formal complaint in semester ${sem}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
     broke: {
       emoji: '💸', title: 'Financially Liquidated',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'Your card declined at the vending machine in Brooks Hall. You have $3.47. Your stipend doesn\'t arrive until the 15th. It is the 3rd.',
-      shareText: `Ran out of money in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
+      shareText: `${archName}${piPhrase}. Card declined in semester ${sem}. The stipend wasn\'t enough.\nUGA Grad Survivor:`,
     },
     disappeared: {
       emoji: '👻', title: 'Disappeared',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'You stopped responding to messages. You stopped showing up to lab meeting. One day your desk was empty. Nobody knows when exactly you left. The department sent one email. Nobody followed up.',
-      shareText: `Disappeared in semester ${sem}. ${runInfo}. ${cards} cards played.\nUGA Grad Survivor:`,
+      shareText: `${archName}${piPhrase}. Just stopped showing up in semester ${sem}. Nobody sent a follow-up.\nUGA Grad Survivor:`,
     },
   };
 
@@ -332,10 +359,20 @@ function showHelp() {
       <div class="help-stat"><span class="emoji">💪</span><span><strong>Body</strong> — Physical health, sleep, energy. Hits zero → hospitalized.</span></div>
       <div class="help-stat"><span class="emoji">💰</span><span><strong>Wallet</strong> — Money and funding. Low wallet drains Mind and Body.</span></div>
       <div class="help-stat"><span class="emoji">🤝</span><span><strong>Bonds</strong> — Relationships. Low bonds drains Mind and Body. Hits zero → disappeared.</span></div>
-      <div class="help-stat"><span class="emoji">📊</span><span><strong>Research</strong> — Your academic output. Too low at milestones = trouble. Below 30 at defense → mastered out.</span></div>
+      <div class="help-stat"><span class="emoji">📊</span><span><strong>Research</strong> — Hidden during play. Revealed at quals, committee meetings, and defense. Too low at those checkpoints = trouble.</span></div>
       <p style="margin-top:12px"><strong>Controls:</strong></p>
       <p>← A or Arrow Left = left choice<br>→ D or Arrow Right = right choice<br>Swipe left/right on mobile<br>Click the buttons, or use ↑↓/WS to navigate menus</p>
       <p style="margin-top:12px"><strong>Tip:</strong> Dying unlocks new archetypes and endings. You're meant to play more than once.</p>
+      <div class="theme-picker">
+        <div class="share-label">THEME</div>
+        <div class="theme-btns">
+          ${['cold','terminal','zine','pixel','classic'].map(t => {
+            const labels = {cold:'Institutional',terminal:'Terminal',zine:'Zine',pixel:'Pixel',classic:'Classic'};
+            const active = document.documentElement.getAttribute('data-theme') === t ? ' active' : '';
+            return `<button class="theme-btn${active}" data-theme="${t}" onclick="setTheme('${t}')">${labels[t]}</button>`;
+          }).join('')}
+        </div>
+      </div>
       <button class="help-close" onclick="closeHelp()">GOT IT</button>
     </div>`;
   document.body.appendChild(overlay);
@@ -354,6 +391,12 @@ function copyShare() {
     feedback.textContent = 'Copied!';
     setTimeout(() => { feedback.textContent = ''; }, 3000);
   });
+}
+
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('uga_theme', t);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
 }
 
 function closeHelp() {

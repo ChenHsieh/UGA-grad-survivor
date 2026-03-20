@@ -17,7 +17,7 @@ Extend the existing network-flavored ending pattern (currently only on "Defended
 | Broke | New |
 | Burnt Out | Out of scope — network is not meaningfully related to mental collapse |
 | Hospitalized | Out of scope — body failure, network is secondary |
-| Disappeared | Out of scope — high network + zero bonds causes mechanical confusion (player wonders why connections didn't help) |
+| Disappeared | Out of scope — high network + zero bonds causes mechanical confusion (player wonders why connections didn't help). If revisited, the correct framing is bonds failure *despite* network: professional contacts ≠ personal support. |
 
 **Network threshold:** `network > 30` (consistent with existing Defended logic)
 
@@ -44,7 +44,7 @@ Extend the existing network-flavored ending pattern (currently only on "Defended
 Shown below the ending body when `network ≤ 30`, only on Mastered Out and Broke.
 
 **Hint text:**
-> 💡 Your network score was low this run. Choices that build professional connections — conferences, LinkedIn, collaborations — unlock a different version of this ending.
+> → Your network score was low this run. Choices that build professional connections — conferences, LinkedIn, collaborations — unlock a different version of this ending.
 
 **Visual treatment:** dashed border callout (signals meta/hint vs. solid borders for story content).
 
@@ -54,11 +54,11 @@ Shown below the ending body when `network ≤ 30`, only on Mastered Out and Brok
 
 ### `js/ui.js` — `renderEnding()`
 
-1. Compute `const hiNet = gameState.network > 30;` at the top of `renderEnding()`.
-2. Add `networkMsg` to `mastered_out` ending body using the flavor text above.
-3. Add `networkMsg` to `broke` ending body using the flavor text above.
-4. Add `networkHint` HTML string: shown when `!hiNet` on mastered_out and broke; empty string otherwise.
-5. Render `networkHint` after the ending body `<div>`, before `ending-stats`.
+1. The existing `defended` networkMsg uses an inline ternary (`gameState.network > 30 ? '...' : '...'`). Follow the same pattern for Mastered Out and Broke — no new named variable needed.
+2. **Mastered Out:** The existing static `body` string is replaced entirely by a conditional `networkMsg` ternary (high vs. low text). The existing body text ("Nobody calls this failing...") is removed and replaced by the network-conditional text.
+3. **Broke:** The existing static `body` string is replaced entirely by a conditional `networkMsg` ternary. The existing body text ("Your card declined at the vending machine...") becomes the low-network variant verbatim — it is not appended to; it replaces the static body.
+4. **networkHint:** A separate HTML string, empty when `gameState.network > 30`, and set to the hint `<div class="network-hint">` when `network ≤ 30`, on mastered_out and broke only.
+5. **Placement:** Render `networkHint` as a sibling `<div class="network-hint">` emitted between the `.ending-body` close tag and the `.ending-stats` open tag — not inside either element.
 
 ### `css/style.css`
 
