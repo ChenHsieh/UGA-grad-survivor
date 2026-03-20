@@ -86,7 +86,24 @@ Driven by a 96,000-run simulation: overall defense rate was 59.3% (too easy), Ov
 
 ---
 
-## v0.8 — Broader Audience Pass
+## v0.8 — Balance Patch (Round 2)
+2026-03-20 · *co-authored with Claude Sonnet 4.6*
+
+Driven by a 96,000-run simulation with corrected v0.7 mechanics: overall defense rate was 13.6% (too hard), gym_bro at 3.2%, and 6/8 archetypes below the 20% floor.
+
+**Passive drain rebalance:** Bonds isolation drain moved from per-card to per-semester-advance (−1 per semester from sem 6, not per card played — the v0.4 add was 3× too aggressive). Global student visa drain: −3/card from sem 6 → −2/card from sem 7. Low-wallet mind drain: −3 → −2. Low-bonds mind drain: −2 → −1. Research→mind threshold raised from <20 to <15.
+
+**Archetype multiplier fixes:** fun_haver mind loss penalty removed (was 1.3×). vibe_coder social losses: 1.5× → 1.3×. neurodivergent mind multiplier: 1.5× → 1.3×. gym_bro wallet/mind losses: 1.3× → 1.15×. double_agent random drain: −2 → −1 per card.
+
+**Starting stat adjustments:** gym_bro (wallet 35→52, mind 40→52), vibe_coder (body 40→47, mind 55→60), fun_haver (mind 40→50, body 55→58), double_agent (mind 50→55, bonds 50→55, wallet 55→58), neurodivergent (mind 55→65).
+
+**Description fixes:** gym_bro body floor corrected to 15 (was stale at 25), global_student visa timing updated to semesters 7–10, double_agent drain updated to −1, fun_haver mind loss penalty removed from description, gym_bro loss multiplier updated to 1.15x.
+
+**Result:** Overall defense rate 13.6% → ~23%. 5/8 archetypes in 20–60% range. Spread 45pp → ~16pp. double_agent (~19%), gym_bro (~18%), and neurodivergent (~18%) remain intentionally hard (all unlockable through failure runs).
+
+---
+
+## v0.9 — Broader Audience Pass
 2026-03-20 · *co-authored with Claude Sonnet 4.6*
 
 Tuned the game to be accessible to any bioinformatics or computational biology PhD student, not just those at UGA's IOB program — while keeping the UGA flavor intact as local color rather than required context.
@@ -109,7 +126,7 @@ Tuned the game to be accessible to any bioinformatics or computational biology P
 
 ---
 
-## v0.9 — Field Identity & AI Cards
+## v0.10 — Field Identity & AI Cards
 2026-03-20 · *co-authored with Claude Sonnet 4.6*
 
 Added 7 new universal cards covering two under-represented tensions in computational biology PhD life.
