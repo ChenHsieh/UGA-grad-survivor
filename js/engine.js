@@ -202,23 +202,23 @@ function choose(side) {
   if (gameState.archetype === 'double_agent') {
     const drainStats = ['mind', 'body', 'wallet', 'bonds'];
     const drainStat = drainStats[Math.floor(Math.random() * drainStats.length)];
-    gameState.st[drainStat] = Math.max(0, gameState.st[drainStat] - 2);
+    gameState.st[drainStat] = Math.max(0, gameState.st[drainStat] - 1);
   }
 
   // PASSIVE DRAIN: financial stress
   if (gameState.st.wallet < 20) {
-    gameState.st.mind = Math.max(0, gameState.st.mind - 3);
+    gameState.st.mind = Math.max(0, gameState.st.mind - 2);
     gameState.st.body = Math.max(0, gameState.st.body - 2);
   }
 
   // PASSIVE DRAIN: low bonds → isolation impairs cognition
   if (gameState.st.bonds < 20) {
-    gameState.st.mind = Math.max(0, gameState.st.mind - 2);
+    gameState.st.mind = Math.max(0, gameState.st.mind - 1);
     gameState.st.body = Math.max(0, gameState.st.body - 1);
   }
 
   // PASSIVE DRAIN: low research → anxiety and advisor pressure
-  if (gameState.st.research < 20 && gameState.semester >= 3) {
+  if (gameState.st.research < 15 && gameState.semester >= 3) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 2);
   }
   if (gameState.st.research < 15 && gameState.semester >= 5) {
@@ -226,13 +226,8 @@ function choose(side) {
   }
 
   // GLOBAL STUDENT: visa pressure in late game
-  if (gameState.archetype === 'global_student' && gameState.semester >= 6) {
-    gameState.st.mind = Math.max(0, gameState.st.mind - 3);
-  }
-
-  // PASSIVE DRAIN: PhD isolation in late game
-  if (gameState.semester >= 6) {
-    gameState.st.bonds = Math.max(0, gameState.st.bonds - 1);
+  if (gameState.archetype === 'global_student' && gameState.semester >= 7) {
+    gameState.st.mind = Math.max(0, gameState.st.mind - 2);
   }
 
   if (card.sets) card.sets.forEach(flag => { if (!gameState.memory.includes(flag)) gameState.memory.push(flag); });
@@ -271,6 +266,11 @@ function continueSemester() {
   gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
   if (gameState.st.wallet <= 0) { gameState.phase='ending'; gameState.ending='broke'; gameState.cause='Wallet'; return render(); }
   gameState.semester = gameState.nextSemester;
+  // PhD isolation: bonds −1 per semester from sem 6 onward (fires once per advance, not per card)
+  if (gameState.semester >= 6) {
+    gameState.st.bonds = Math.max(0, gameState.st.bonds - 1);
+    if (gameState.st.bonds <= 0) { gameState.phase='ending'; gameState.ending='disappeared'; gameState.cause='Bonds'; return render(); }
+  }
   gameState.nextSemester = null;
   gameState.cardCount = 0;
   startNextSemester();
