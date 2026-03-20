@@ -1,4 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@keyframes screenIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 :root {
   --bg: #0e0c0a; --surface: #1a1714; --card-bg: #f5f0e8; --card-text: #1a1714;
   --red: #c0392b; --gold: #d4a017; --green: #2d6a4f;
@@ -13,7 +14,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .wrapper { width: 100%; max-width: 440px; position: relative; }
-.title-screen { text-align: center; padding: 40px 10px 20px; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
+.title-screen { text-align: center; padding: 40px 10px 20px; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; animation: screenIn 0.35s ease-out; }
 .title-screen h1 { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; line-height: 1.1; margin-bottom: 4px; }
 .title-screen h1 em { font-style: italic; color: var(--gold); }
 .title-screen .sub { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--dim); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 28px; }
@@ -28,7 +29,7 @@ body {
 .title-screen .begin-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212,160,23,0.3); }
 .title-screen .credits { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #6a6058; margin-top: 24px; }
 .press-hint { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #5a5448; margin-top: 12px; letter-spacing: 1px; }
-.archetype-screen { padding: 20px 0; }
+.archetype-screen { padding: 20px 0; animation: screenIn 0.35s ease-out; }
 .archetype-screen .screen-title { font-family: 'Playfair Display', serif; font-size: 22px; text-align: center; margin-bottom: 4px; }
 .archetype-screen .screen-sub { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--dim); text-align: center; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; }
 .arch-card {
@@ -110,7 +111,7 @@ body {
 .card-btn.right:hover { background: var(--red); color: var(--card-bg); border-color: var(--red); }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; max-width: 80%; animation: slideUp 0.3s ease-out; z-index: 1000; }
 @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
-.ending-screen { padding: 20px 0; text-align: center; }
+.ending-screen { padding: 20px 0; text-align: center; animation: screenIn 0.35s ease-out; }
 .ending-emoji { font-size: 64px; margin-bottom: 12px; }
 .ending-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; margin-bottom: 4px; }
 .ending-sub { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
@@ -160,3 +161,28 @@ body {
 .controls-hint { font-family: 'DM Sans', sans-serif; text-align: center; font-size: 12px; color: #5a5448; margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
 .footer-note { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #5a5448; text-align: center; margin-top: 8px; letter-spacing: 1px; }
 .footer-credit { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #4a4540; text-align: center; margin-top: 16px; }
+
+/* Rotation complete banner (PI selection) */
+.rotation-complete-banner { border: 1px solid var(--gold); border-radius: 8px; background: rgba(212,160,23,0.06); padding: 16px; margin-bottom: 24px; text-align: center; }
+.rotation-badge { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+.rotation-context { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--dim); line-height: 1.65; }
+
+/* Semester advance checkpoint screen */
+.semester-advance-screen {
+  text-align: center; padding: 40px 10px 20px; min-height: 80vh;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  animation: screenIn 0.35s ease-out;
+}
+.sem-advance-badge { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; font-weight: 700; border: 1px solid var(--gold); border-radius: 4px; padding: 4px 12px; display: inline-block; margin-bottom: 12px; }
+.sem-advance-done-label { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--dim); letter-spacing: 1.5px; text-transform: uppercase; text-decoration: line-through; margin-bottom: 16px; }
+.sem-advance-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+.sem-advance-next-label { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px; }
+.sem-advance-flavor { font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--dim); line-height: 1.6; max-width: 300px; margin-bottom: 24px; }
+.sem-advance-stats { display: flex; gap: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.sem-advance-cost { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--dim); letter-spacing: 1px; margin-bottom: 24px; }
+.sem-advance-btn {
+  background: var(--gold); color: var(--bg); border: none; border-radius: 10px;
+  padding: 14px 40px; font-family: 'Space Mono', monospace; font-size: 13px;
+  font-weight: 700; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s;
+}
+.sem-advance-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212,160,23,0.3); }

@@ -46,7 +46,13 @@ function renderArchetype() {
 function renderPISelection() {
   const pis = Object.entries(PI_DATA);
   const unlocked = save.unlockedPIs || ['micromanager', 'ghost', 'mentor', 'new_pi'];
-  let html = `<div class="archetype-screen"><div class="screen-title">Choose Your Advisor</div><div class="screen-sub">This will shape your entire PhD experience</div>`;
+  let html = `<div class="archetype-screen">
+    <div class="rotation-complete-banner">
+      <div class="rotation-badge">📋 ROTATION COMPLETE · SEMESTER 1</div>
+      <div class="rotation-context">You spent a semester meeting professors, sitting through awkward lab coffees, and learning which research directions actually excite you. Now you have to commit. This relationship shapes the next 4–6 years.</div>
+    </div>
+    <div class="screen-title">Choose Your Advisor</div>
+    <div class="screen-sub">↑↓ or W/S to browse · Space to select</div>`;
   pis.forEach(([key, data]) => {
     const locked = !unlocked.includes(key);
     html += `
@@ -60,6 +66,44 @@ function renderPISelection() {
   });
   html += `</div>`;
   return html;
+}
+
+function renderSemesterAdvance() {
+  const done = gameState.semester;
+  const next = gameState.nextSemester;
+  const semLabels = {
+    1:'The Naive Years', 2:'The Naive Years',
+    3:'The Grind', 4:'The Grind', 5:'Deep In It', 6:'Deep In It',
+    7:'The Reckoning', 8:'Career Crossroads', 9:'The Final Push', 10:'Defense or Bust'
+  };
+  const flavors = {
+    3: "First year is officially behind you. The qualifying exam is out there, somewhere in the fog.",
+    4: "The grind is real. Your brain hurts in a productive way. Quals are coming.",
+    5: "Deep in it now. The dissertation is real, if not finished.",
+    6: "Committee season. Everyone wants a progress report. You have a PowerPoint.",
+    7: "You've been here long enough to have strong opinions about the grad lounge coffee.",
+    8: "The end is theoretically visible. You've written more than you ever thought possible.",
+    9: "One more push. Defense is almost within reach.",
+    10: "Final semester. Defense or bust. No more semesters after this one."
+  };
+  const st = gameState.st;
+  return `<div class="semester-advance-screen">
+    <div class="sem-advance-badge">✓ SEMESTER ${done} COMPLETE</div>
+    <div class="sem-advance-done-label">${semLabels[done] || ''}</div>
+    <div class="sem-advance-title">Entering Semester ${next}</div>
+    <div class="sem-advance-next-label">${semLabels[next] || ''}</div>
+    <div class="sem-advance-flavor">${flavors[next] || ''}</div>
+    <div class="sem-advance-stats">
+      <span>🧠 ${st.mind}</span>
+      <span>💪 ${st.body}</span>
+      <span>💰 ${st.wallet}</span>
+      <span>🤝 ${st.bonds}</span>
+      <span>📊 ${st.research}</span>
+    </div>
+    <div class="sem-advance-cost">Cost of living: Wallet −1</div>
+    <button class="sem-advance-btn" onclick="continueSemester()">Enter Semester ${next} →</button>
+    <div style="font-size:9px;color:#3a3530;margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
+  </div>`;
 }
 
 function fxHints(fx) {
@@ -246,6 +290,7 @@ function render() {
   if (gameState.phase === 'title') app.innerHTML = renderTitle();
   else if (gameState.phase === 'archetype') app.innerHTML = renderArchetype();
   else if (gameState.phase === 'pi_selection') app.innerHTML = renderPISelection();
+  else if (gameState.phase === 'semester_advance') app.innerHTML = renderSemesterAdvance();
   else if (gameState.phase === 'play') app.innerHTML = renderPlay();
   else if (gameState.phase === 'ending') app.innerHTML = renderEnding();
 }
