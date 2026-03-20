@@ -7,7 +7,7 @@ function renderTitle() {
       <div class="sub">BIOINFORMATICS EDITION</div>
       <div class="tagline">A card game about surviving a PhD on \$34,738/year.<br>6 endings. 8 archetypes. 6 advisors. Swipe to find out.</div>
       <button class="begin-btn" onclick="gameState.phase='archetype'; menuIndex=0; render()">Begin</button>
-      <div style="font-size:9px;color:#3a3530;margin-top:12px;letter-spacing:1px">PRESS SPACE TO START</div>
+      <div class="press-hint">PRESS SPACE TO START</div>
       <div class="credits">by Chen Hsieh, UGA Bioinformatics PhD Candidate</div>
     </div>
   `;
@@ -35,7 +35,7 @@ function renderArchetype() {
           <span>🤝 ${s.bonds}</span>
           <span>📊 ${s.research}</span>
         </div>
-        ${locked ? `<div style="font-size:10px;color:#3a3530;margin-top:6px">🔒 Unlock by playing</div>` : ''}
+        ${locked ? `<div class="arch-locked-msg">🔒 Unlock by playing</div>` : ''}
       </div>
     `;
   });
@@ -60,7 +60,7 @@ function renderPISelection() {
         <div class="arch-emoji">${data.emoji}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-desc">${data.desc}</div>
-        ${locked ? `<div style="font-size:10px;color:#3a3530;margin-top:6px">🔒 Unlock by playing</div>` : ''}
+        ${locked ? `<div class="arch-locked-msg">🔒 Unlock by playing</div>` : ''}
       </div>
     `;
   });
@@ -160,7 +160,7 @@ function renderPlay() {
       </div>
     </div>
   </div>
-  <div style="text-align:center;font-size:9px;color:#3a3530;margin-top:8px;letter-spacing:1px">SWIPE · CLICK · ← A/D →</div>
+  <div class="controls-hint">SWIPE · CLICK · ← A/D →</div>
   <button class="help-btn" onclick="showHelp()" title="How to play">?</button>`;
 
   return html;
@@ -232,7 +232,7 @@ function renderEnding() {
     </div>
 
     <div class="share-section">
-      <div style="font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Share your run</div>
+      <div class="share-label">Share your run</div>
       <textarea id="shareText" class="share-textarea" rows="4" onclick="this.select()">${d.shareText}\nhttps://chenhsieh.github.io/UGA-grad-survivor/</textarea>
       <button class="share-btn" onclick="copyShare()">Copy to Clipboard</button>
       <div id="shareFeedback" class="share-feedback"></div>
@@ -240,8 +240,8 @@ function renderEnding() {
 
     ${renderEndingGrid()}
     <button class="play-again-btn" onclick="gameState.phase='archetype'; gameState.ending=null; gameState.currentCard=null; menuIndex=0; render()">Play Again</button>
-    <div style="font-size:9px;color:#3a3530;margin-top:8px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
-    <div style="font-size:8px;color:#3a3530;text-align:center;margin-top:16px;letter-spacing:1px">MADE BY A UGA PHD CANDIDATE · GRADUATING JUNE 2026 · chenhsieh.xyz</div>
+    <div class="footer-note">PRESS SPACE TO CONTINUE</div>
+    <div class="footer-credit">MADE BY A UGA PHD CANDIDATE · GRADUATING JUNE 2026 · chenhsieh.xyz</div>
   </div>`;
 
   // Update save state
