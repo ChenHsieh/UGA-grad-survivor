@@ -47,15 +47,17 @@ The passive drain loop already only affects `mind` and `body` when wallet is low
 
 ### 2. Add Wallet Passive Drain (`engine.js`)
 
-Add a "cost of living" drain: subtract 1 from wallet every 3 cards (once per semester). This gives wallet a slow bleed, making financial management an active concern.
+Add a "cost of living" drain: subtract 1 from wallet each time the semester advances. This is exactly once per semester, triggered at the existing `gameState.semester++` block (line 253 in `engine.js`), before the ending check.
 
 ```js
-if (gameState.cardCount % 3 === 0) {
-    stats.wallet = Math.max(0, stats.wallet - 1);
-}
+// After gameState.semester++ (line 253), before startNextSemester():
+gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
+// Note: the broke ending check (line 244) runs on the NEXT card, so a wallet=0
+// from this drain will be caught then. Acceptable — semester transitions are
+// not a gameplay moment where immediate death feels right.
 ```
 
-Apply before the ending check so it can trigger broke.
+This gives wallet a slow bleed of ~10 points over a full 10-semester game.
 
 ### 3. Add Late-Game Bonds Drain (`engine.js`)
 
@@ -71,31 +73,31 @@ This is mild individually but compounds with the existing `bonds < 20 → mind/b
 
 ### 4. Overachiever Perk — Rescue Mind Only (`engine.js`, `applyPerk`)
 
-**Current:** Every 3 cards, if any of `mind/body/wallet/bonds` is below 20, boost that stat by +3.
-**Change:** Only rescue `mind`. Body, wallet, and bonds are no longer protected.
+**Current** (engine.js lines 195-201): Every 3 total cards, finds all non-research stats below 20 and boosts a random one by +3.
+**Change:** Replace the `s !== 'research'` filter with `s === 'mind'` — only rescue mind.
 
 ```js
-// In the overachiever post-choice block:
-if (gameState.cardCount % 3 === 0 && stats.mind < 20) {
-    stats.mind = Math.min(100, stats.mind + 3);
-}
+// engine.js line 196 — change filter from:
+const weakStats = Object.entries(gameState.st).filter(([s, v]) => v < 20 && s !== 'research');
+// To:
+const weakStats = Object.entries(gameState.st).filter(([s, v]) => v < 20 && s === 'mind');
 ```
 
-Thematically: overachievers push through mental strain but are still vulnerable to physical collapse, financial pressure, and social isolation.
+Thematically: overachievers push through mental strain but are still vulnerable to physical collapse, financial pressure, and social isolation. The `totalCards % 3` trigger (line 195) and +3 bonus (line 199) are unchanged.
 
-### 5. Global Student — Lower Starting Bonds & Earlier Mind Drain (`js/data/archetypes.js`, `engine.js`)
+### 5. Global Student — Weaken Bonds Protection & Earlier Mind Drain (`engine.js`)
 
-- **Starting bonds:** 94 → **70**
+- **Bonds loss halving perk:** change from `Math.ceil(delta / 2)` (50% reduction) to `Math.ceil(delta * 0.75)` (25% reduction)
 - **Late-game mind drain:** begins at semester **6** (was 8)
 
-The high starting bonds meant disappeared was nearly impossible for this archetype. The earlier drain makes the final push to defense riskier.
+The root cause is not starting bonds (which is 55 — near the middle). It's the bonds-loss-halving perk that causes bonds to accumulate to ~94 by game end, making disappeared impossible. Reducing the perk from 50% reduction to 25% reduction keeps the thematic flavor (tight-knit community softens social losses) while allowing bonds to actually fall. The earlier mind drain starts the visa-stress pressure two semesters sooner.
 
 ### 6. Fun Haver — Soften Research Penalty (`engine.js`, `applyPerk`)
 
-**Current:** research gains are `Math.ceil(delta / 2)` (~50% of normal)
-**Change:** `Math.floor(delta * 0.75)` (~75% of normal)
+**Current:** research gains are `Math.ceil(delta / 2)` (~50% of normal, rounds up — a +1 card still gives +1)
+**Change:** `Math.max(1, Math.floor(delta * 0.75))` when delta > 0 (~75% of normal)
 
-Quals remain achievable with active play, but research is still a meaningful disadvantage for this archetype.
+The `Math.max(1, ...)` guard preserves the current behavior that any positive research gain is at least +1, preventing small cards from being zeroed out (e.g., `Math.floor(1 * 0.75) = 0` without the guard). Quals remain achievable with active play, but research is still a meaningful disadvantage for this archetype.
 
 ### 7. Gym Bro — Lower Body Floor (`engine.js`)
 
@@ -115,12 +117,13 @@ Mentor still softens advisor card damage (thematically correct) but no longer ne
 
 | File | Changes |
 |---|---|
-| `engine.js` | Wallet floor removal, wallet drain, bonds drain, overachiever perk, gym bro floor, fun haver penalty, mentor buffer |
-| `js/data/archetypes.js` | Global student starting bonds: 94 → 70 |
+| `engine.js` | Wallet floor removal, wallet drain, bonds drain, overachiever perk, gym bro floor, fun haver penalty, global student perk + drain, mentor buffer |
 
 ## Risks & Watch Points
 
 - **fun_haver + new_pi** (currently 25.8%) should land near 40% after fun haver research buff. If it falls below 35%, consider reducing new_pi's `research * 0.8` ghost-equivalent penalty.
 - **ghost PI** (currently 62.2%) expected to drop naturally from passive drains. If it stays above 65%, add a mild ghost-specific bonds drain (no advisor support = social isolation).
 - **Wallet drain timing:** applying once per semester means early-game players won't feel it much. If broke still doesn't fire enough, increase to -2 per semester.
+- **Neurodivergent watch:** all mind changes are ×1.5 for this archetype. The new bonds drain (sem 6+) can cascade into mind drain (bonds < 20 → mind -2). Monitor that neurodivergent doesn't drop below 40% after all changes are applied.
+- **Post-implementation re-simulation required:** run 2000 games/combo after all 8 changes are applied together before shipping. Confirm all combos land in the 40–70% range and broke/disappeared shares are visible.
 - Do not change milestone card effects or save version — out of scope for this pass.
