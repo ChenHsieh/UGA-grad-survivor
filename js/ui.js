@@ -58,11 +58,10 @@ function renderArchetype() {
 function renderRotationComplete() {
   const st = gameState.st;
   return `<div class="semester-advance-screen">
-    <div class="sem-advance-badge">SEMESTER 1 COMPLETE · ROTATIONS END</div>
-    <div class="sem-advance-done-label">The Naive Years</div>
+    <div class="sem-advance-badge">ROTATIONS END</div>
     <div class="sem-advance-title">Choose Your Lab</div>
     <div class="sem-advance-next-label">The Most Important Decision of Your PhD</div>
-    <div class="sem-advance-flavor">You spent the semester rotating through labs. You've seen the famous PI with no time for students. The warm one with no publications. The new one still figuring it out.<br><br>Now you have to commit. One advisor. One research direction. The next four to six years of your life.</div>
+    <div class="sem-advance-flavor">You've met the famous PI with no time, the warm one with no publications, and the new one still figuring it out. Now you commit. Four to six years.</div>
     <div class="sem-advance-stats">
       <span>${statIcon('mind')} ${st.mind}</span>
       <span>${statIcon('body')} ${st.body}</span>
@@ -70,7 +69,6 @@ function renderRotationComplete() {
       <span>${statIcon('bonds')} ${st.bonds}</span>
     </div>
     <button class="sem-advance-btn" onclick="continueToPI()">Choose Your Advisor →</button>
-    <div style="font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
   </div>`;
 }
 
@@ -100,21 +98,23 @@ function renderSemesterAdvance() {
   const next = gameState.nextSemester;
   const semLabels = SEM_LABELS;
   const flavors = {
-    3: "First year is officially behind you. The qualifying exam is out there, somewhere in the fog.",
-    4: "The grind is real. Your brain hurts in a productive way. Quals are coming.",
-    5: "Post-quals. The project is yours now. Nobody tells you what to do next.",
+    3: "First year is behind you. Quals are out there somewhere in the fog.",
+    4: "Your brain hurts in a productive way. Quals are coming.",
+    5: "Post-quals. The project is yours. Nobody tells you what to do next.",
     6: "Committee season. Everyone wants a progress report. You have a PowerPoint.",
-    7: "You've been here long enough to have strong opinions about the grad lounge coffee.",
-    8: "The end is theoretically visible. You've written more than you ever thought possible.",
+    7: "You now have strong opinions about the grad lounge coffee.",
+    8: "The end is theoretically visible. You've written more than you thought possible.",
     9: "One more push. Defense is almost within reach.",
-    10: "Final semester. Defense or bust. No more semesters after this one."
+    10: "Defense or bust. There are no semesters after this one."
   };
   const st = gameState.st;
+  // This screen carries no decision, so it earns as few words as possible. The
+  // struck-through previous phase, the cost-of-living line (already visible as
+  // Wallet −1 in the stats) and the PRESS SPACE caption the button already
+  // implies were all cut — it ran to nine text elements between every semester.
   return `<div class="semester-advance-screen">
-    <div class="sem-advance-badge">SEMESTER ${done} COMPLETE</div>
-    <div class="sem-advance-done-label">${semLabels[done] || ''}</div>
-    <div class="sem-advance-title">Entering Semester ${next}</div>
-    <div class="sem-advance-next-label">${semLabels[next] || ''}</div>
+    <div class="sem-advance-badge">SEMESTER ${next}</div>
+    <div class="sem-advance-title">${semLabels[next] || ''}</div>
     <div class="sem-advance-flavor">${flavors[next] || ''}</div>
     <div class="sem-advance-stats">
       <span>${statIcon('mind')} ${st.mind}</span>
@@ -122,9 +122,7 @@ function renderSemesterAdvance() {
       <span>${statIcon('wallet')} ${st.wallet}</span>
       <span>${statIcon('bonds')} ${st.bonds}</span>
     </div>
-    <div class="sem-advance-cost">Cost of living: Wallet −1</div>
-    <button class="sem-advance-btn" onclick="continueSemester()">Enter Semester ${next} →</button>
-    <div style="font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
+    <button class="sem-advance-btn" onclick="continueSemester()">Continue →</button>
   </div>`;
 }
 
@@ -194,10 +192,6 @@ function renderPlay() {
     <div class="card" id="card" ontouchstart="startDrag(event)" ontouchmove="moveDrag(event)" ontouchend="endDrag(event)" onmousedown="startDrag(event)" onmousemove="moveDrag(event)" onmouseup="endDrag(event)" onmouseleave="endDrag(event)">
       <div><div class="card-emoji">${cardArt(card)}</div><div class="card-tag">${card.tag}</div><div class="card-title">${card.title}</div></div>
       <div class="card-body">${card.body}</div>
-      <div class="card-hints">
-        <div class="card-hint" id="hintL">${card.cL}</div>
-        <div class="card-hint" id="hintR">${card.cR}</div>
-      </div>
       <div class="card-controls">
         <button class="card-btn left" onclick="choose('left')">← ${card.cL}${fxHints(card.eL)}</button>
         <button class="card-btn right" onclick="choose('right')">${card.cR} →${fxHints(card.eR)}</button>

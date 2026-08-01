@@ -31,16 +31,16 @@ function moveDrag(e) {
   const delta = dragCurrent - dragStart;
   const rot = delta * 0.05;
   card.style.transform = `translateX(${delta * 0.5}px) rotateZ(${rot}deg)`;
-  if (delta < -30) {
-    document.getElementById('hintL').classList.add('show');
-    document.getElementById('hintR').classList.remove('show');
-  } else if (delta > 30) {
-    document.getElementById('hintR').classList.add('show');
-    document.getElementById('hintL').classList.remove('show');
-  } else {
-    document.getElementById('hintL').classList.remove('show');
-    document.getElementById('hintR').classList.remove('show');
-  }
+  armChoice(delta < -30 ? 'left' : delta > 30 ? 'right' : null);
+}
+
+// Light up the choice a swipe is heading toward. The labels used to be repeated
+// in a hidden row above the buttons purely to do this, which put the same words
+// on screen twice mid-swipe and cost vertical space the rest of the time.
+function armChoice(side) {
+  const l = document.querySelector('.card-btn.left'), r = document.querySelector('.card-btn.right');
+  if (l) l.classList.toggle('armed', side === 'left');
+  if (r) r.classList.toggle('armed', side === 'right');
 }
 function endDrag(e) {
   const card = document.getElementById('card');
@@ -49,8 +49,7 @@ function endDrag(e) {
   dragStart = 0;
   dragCurrent = 0;
   card.style.transform = '';
-  document.getElementById('hintL').classList.remove('show');
-  document.getElementById('hintR').classList.remove('show');
+  armChoice(null);
   if (delta < -70) choose('left');
   else if (delta > 70) choose('right');
 }
