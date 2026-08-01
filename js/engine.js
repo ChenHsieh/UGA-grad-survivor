@@ -5,7 +5,8 @@ const SAVE_KEY = 'uga_grad_survivor_v2';
 let save = { version: 3, endings: [], archetypes: ['overachiever', 'vibe_coder', 'fun_haver', 'global_student', 'biologist'], unlockedPIs: ['micromanager', 'ghost', 'mentor', 'new_pi'], totalRuns: 0, totalDeaths: 0, bestSemester: 0 };
 let gameState = {
   phase: 'title', archetype: null, piType: null, st: {mind:50, body:50, wallet:50, bonds:50, research:50}, semester: 1, cardCount: 0,
-  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null
+  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null,
+  runCommitted: false
 };
 
 function getPhase(semester) {
@@ -38,6 +39,7 @@ function selectArchetype(arch) {
   gameState.ending = null;
   gameState.cause = null;
   gameState.nextMilestone = null;
+  gameState.runCommitted = false;
   gameState.phase = 'play';
   save.totalRuns++;
   startNextSemester();
@@ -130,12 +132,27 @@ function choose(side) {
 
   let effects = side === 'left' ? card.eL : card.eR;
 
-  // Defense delay check
-  if (card.milestone && side === 'right' && card.id === 'ms_defense_sched' && gameState.memory.includes('defense_delayed')) {
-    gameState.phase = 'ending';
-    gameState.ending = 'mastered_out';
-    gameState.cause = 'Delayed Too Long';
-    return render();
+  // Defense delay: pushing the defense back re-queues the scheduling milestone
+  // instead of skipping past it. Nothing used to set 'defense_delayed', so the
+  // ending below was unreachable and delaying was strictly better than scheduling
+  // (it advanced straight to the defense and dodged the -15 Mind at no cost).
+  if (card.milestone && side === 'right' && card.id === 'ms_defense_sched') {
+    if (gameState.memory.includes('defense_delayed')) {
+      gameState.phase = 'ending';
+      gameState.ending = 'mastered_out';
+      gameState.cause = 'Delayed Too Long';
+      return render();
+    }
+    gameState.memory.push('defense_delayed');
+    gameState.totalCards++;
+    // Re-queue the decision later in the same semester rather than burning it.
+    // Semester 10 is terminal, so advancing here would make a single delay an
+    // automatic loss and the second-delay ending below could never fire.
+    gameState.cardCount = 0;
+    gameState.nextMilestone = MILESTONE_CARDS.find(c => c.id === 'ms_defense_sched');
+    gameState.currentCard = drawCard();
+    render();
+    return;
   }
 
   // Quals failure check
@@ -168,7 +185,15 @@ function choose(side) {
     return render();
   }
 
+  // Record the card's flags before any early return, so a choice with no stat
+  // effects still marks the card as seen and applies its `sets` flags.
+  function recordCard() {
+    if (card.sets) card.sets.forEach(flag => { if (!gameState.memory.includes(flag)) gameState.memory.push(flag); });
+    if (!gameState.memory.includes(card.id)) gameState.memory.push(card.id);
+  }
+
   if (!effects) {
+    recordCard();
     gameState.cardCount++;
     gameState.totalCards++;
     gameState.semester++;
@@ -230,8 +255,7 @@ function choose(side) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 2);
   }
 
-  if (card.sets) card.sets.forEach(flag => { if (!gameState.memory.includes(flag)) gameState.memory.push(flag); });
-  gameState.memory.push(card.id);
+  recordCard();
 
   gameState.totalCards++;
   gameState.cardCount++;

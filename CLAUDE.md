@@ -23,7 +23,7 @@ js/
     cards-phase1.js     # Semesters 1–2 (19 cards)
     cards-phase2.js     # Semesters 3–6 (99 cards)
     cards-phase3.js     # Semesters 7–10 (22 cards)
-    cards-universal.js  # Always available (32 cards)
+    cards-universal.js  # Always available (39 cards)
     cards-exclusive.js  # Archetype & PI exclusive cards (42 cards)
     cards-callback.js   # Unlocked by prior choices (6 cards)
     cards-milestone.js  # Milestone events (6 cards)
@@ -31,7 +31,17 @@ simulation/
   simulation.ipynb      # Monte Carlo balance simulator
 ```
 
-**Total: 226 cards**
+**Total: 233 cards**
+
+## Card Text Budget
+
+Card text is the main pacing lever — players read every word of every card.
+
+- **Body: 30 words hard cap**, aim for ~24. Two sentences.
+- **Choice labels: 22 characters hard cap**, aim for ~17. The label is the verb of
+  the choice, not a restatement of the situation.
+- Don't put stat hints in labels (`(move stress)`) — `fxHints()` already renders
+  the affected stats as icon arrows under each button.
 
 ## Adding New Cards
 
@@ -62,11 +72,14 @@ Stat keys: `mind`, `body`, `wallet`, `bonds`, `research`, `network`
 
 | Function | Line | Purpose |
 |---|---|---|
-| `drawCard()` | 57 | Build card pool, serve milestones |
-| `choose(side)` | 122 | Apply effects, passive drains, ending checks |
-| `applyPerk()` | 276 | Archetype perk multipliers |
-| `applyPIPerk()` | 320 | PI perk multipliers |
-| `selectPI()` | 266 | PI selection after rotation |
+| `drawCard()` | 59 | Build card pool, serve milestones |
+| `choose(side)` | 123 | Apply effects, passive drains, ending checks |
+| `selectPI()` | 319 | PI selection after rotation |
+| `applyPerk()` | 329 | Archetype perk multipliers |
+| `applyPIPerk()` | 372 | PI perk multipliers |
+
+`commitRun()` in `ui.js` persists a finished run to `save` — it is guarded by
+`gameState.runCommitted` and must be called before any HTML that reads `save`.
 
 ## Game Mechanics
 
@@ -79,13 +92,15 @@ Stat keys: `mind`, `body`, `wallet`, `bonds`, `research`, `network`
 - `network` — Hidden; affects **Defended** flavor text
 
 ### Passive Drains (per card, in `choose()`)
-- `wallet < 20`: Mind −3, Body −2
-- `bonds < 20`: Mind −2, Body −1
-- `research < 20` && `sem >= 3`: Mind −2
+- `wallet < 20`: Mind −2, Body −2
+- `bonds < 20`: Mind −1, Body −1
+- `research < 15` && `sem >= 3`: Mind −2
 - `research < 15` && `sem >= 5`: Bonds −2
-- `sem >= 6`: Bonds −1 (PhD isolation)
-- `global_student` && `sem >= 6`: Mind −3
-- Per semester advance: Wallet −1 (cost of living)
+- `global_student` && `sem >= 7`: Mind −2
+
+### Per Semester Advance (in `continueSemester()`)
+- Wallet −1 (cost of living)
+- `sem >= 6`: Bonds −1 (PhD isolation) — fires once per advance, not per card
 
 ### Archetypes (8)
 Default: `overachiever`, `vibe_coder`, `fun_haver`, `global_student`, `biologist`
@@ -102,7 +117,7 @@ Unlockable: `exploiter` (mastered_out), `dynasty` (defended)
 | `ms_quals` | 4 | Research < 25 → retry (3× max) → mastered_out |
 | `ms_committee_1` | 6 | Research < 25 → Mind −10 |
 | `ms_committee_2` | 8 | Research < 35 → Mind −15 |
-| `ms_defense_sched` | 9 | Schedule or delay defense |
+| `ms_defense_sched` | 9 | Schedule, or delay → re-queues after 3 more cards; 2nd delay → mastered_out |
 | `ms_defense` | 10 | Research ≥ 30 → Defended; else Mastered Out |
 
 ### Save System

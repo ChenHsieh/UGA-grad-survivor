@@ -19,6 +19,12 @@ const ARCH_UNLOCK_HINTS = {
   neurodivergent: 'Get the Burnt Out ending',
 };
 
+const SEM_LABELS = {
+  1:'The Naive Years', 2:'The Naive Years',
+  3:'The Grind', 4:'The Grind', 5:'Deep In It', 6:'Deep In It',
+  7:'The Reckoning', 8:'Career Crossroads', 9:'The Final Push', 10:'Defense or Bust'
+};
+
 function renderArchetype() {
   const archs = Object.entries(ARCHETYPE_DATA);
   const selectable = getSelectableArchetypes();
@@ -92,11 +98,7 @@ function renderPISelection() {
 function renderSemesterAdvance() {
   const done = gameState.semester;
   const next = gameState.nextSemester;
-  const semLabels = {
-    1:'The Naive Years', 2:'The Naive Years',
-    3:'The Grind', 4:'The Grind', 5:'Deep In It', 6:'Deep In It',
-    7:'The Reckoning', 8:'Career Crossroads', 9:'The Final Push', 10:'Defense or Bust'
-  };
+  const semLabels = SEM_LABELS;
   const flavors = {
     3: "First year is officially behind you. The qualifying exam is out there, somewhere in the fog.",
     4: "The grind is real. Your brain hurts in a productive way. Quals are coming.",
@@ -141,18 +143,15 @@ function fxHints(fx) {
 function renderPlay() {
   if (!gameState.currentCard) gameState.currentCard = drawCard();
   const card = gameState.currentCard;
-  const phase = getPhase(gameState.semester);
-  const semLabels = {
-    1:'The Naive Years', 2:'The Naive Years',
-    3:'The Grind', 4:'The Grind', 5:'Deep In It', 6:'Deep In It',
-    7:'The Reckoning', 8:'Career Crossroads', 9:'The Final Push', 10:'Defense or Bust'
-  };
+  const arch = gameState.archetype ? ARCHETYPE_DATA[gameState.archetype] : null;
 
+  // Single-line run status. The game title, full archetype name and phase caption
+  // used to be re-rendered above every card — pure repetition that pushed the
+  // card down the viewport. Archetype survives as its emoji (name on hover).
   let html = `<div class="header">
-    <h1>UGA Grad <em>Survivor</em></h1>
-    <div class="sub">${gameState.archetype ? ARCHETYPE_DATA[gameState.archetype].name.toUpperCase() : 'UNKNOWN'}</div>
-    <div class="semester-badge">Semester ${gameState.semester}/10</div>
-    <div class="phase-label">${semLabels[gameState.semester] || 'The Reckoning'}</div>
+    <span class="run-arch" title="${arch ? arch.name : 'Unknown'}">${arch ? arch.emoji : '❓'}</span>
+    <span class="semester-badge">S${gameState.semester}/10</span>
+    <span class="phase-label">${SEM_LABELS[gameState.semester] || 'The Reckoning'}</span>
   </div>`;
 
   const statDefs = [
@@ -206,7 +205,7 @@ function renderPlay() {
       </div>
     </div>
   </div>
-  <div class="controls-hint">SWIPE · CLICK · ← A/D →</div>
+  ${gameState.totalCards < 3 ? '<div class="controls-hint">SWIPE · CLICK · ← A/D →</div>' : ''}
   <button class="help-btn" onclick="showHelp()" title="How to play">?</button>`;
 
   return html;
@@ -271,6 +270,10 @@ function renderEnding() {
   const d = endingData[ending];
   if (!d) return '<div>Error loading ending.</div>';
 
+  // Persist the run BEFORE building the HTML — renderEndingGrid() reads save.endings,
+  // so committing afterwards showed the ending you just earned as still locked.
+  commitRun(ending);
+
   const networkHint = (['mastered_out', 'broke'].includes(ending) && gameState.network <= 30)
     ? `<div class="network-hint">→ Your network score was low this run. Choices that build professional connections — conferences, LinkedIn, collaborations — unlock a different version of this ending.</div>`
     : '';
@@ -307,7 +310,15 @@ function renderEnding() {
     <div class="footer-credit">MADE BY A UGA PHD CANDIDATE · GRADUATING JUNE 2026 · chenhsieh.xyz</div>
   </div>`;
 
-  // Update save state
+  return html;
+}
+
+// Commit a finished run to the save file. Guarded by gameState.runCommitted so a
+// re-render of the ending screen can't double-count totalDeaths.
+function commitRun(ending) {
+  if (gameState.runCommitted) return;
+  gameState.runCommitted = true;
+
   save.bestSemester = Math.max(save.bestSemester, gameState.semester);
   if (ending !== 'defended') save.totalDeaths++;
   if (!save.endings.includes(ending)) save.endings.push(ending);
@@ -322,8 +333,6 @@ function renderEnding() {
   save.archetypes = [...new Set(save.archetypes)];
   save.endings = [...new Set(save.endings)];
   saveSave();
-
-  return html;
 }
 
 function renderEndingGrid() {
