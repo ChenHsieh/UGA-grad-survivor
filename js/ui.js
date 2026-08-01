@@ -36,18 +36,18 @@ function renderArchetype() {
     const s = data.st;
     html += `
       <div class="arch-card ${locked ? 'locked' : ''} ${isFirst ? 'selected' : ''}" ${!locked ? `onclick="selectArchetype('${key}')"` : ''}>
-        <div class="arch-emoji">${data.emoji}</div>
+        <div class="arch-emoji">${archIcon(key)}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-perk">${data.perk}</div>
         <div class="arch-desc">${data.desc}</div>
         <div class="arch-stats">
-          <span>🧠 ${s.mind}</span>
-          <span>💪 ${s.body}</span>
-          <span>💰 ${s.wallet}</span>
-          <span>🤝 ${s.bonds}</span>
-          <span>📊 ${s.research}</span>
+          <span>${statIcon('mind')} ${s.mind}</span>
+          <span>${statIcon('body')} ${s.body}</span>
+          <span>${statIcon('wallet')} ${s.wallet}</span>
+          <span>${statIcon('bonds')} ${s.bonds}</span>
+          <span>${statIcon('research')} ${s.research}</span>
         </div>
-        ${locked ? `<div class="arch-locked-msg">🔒 ${ARCH_UNLOCK_HINTS[key] || 'Unlock by playing'}</div>` : ''}
+        ${locked ? `<div class="arch-locked-msg"><span class="lock">Locked</span> ${ARCH_UNLOCK_HINTS[key] || 'Unlock by playing'}</div>` : ''}
       </div>
     `;
   });
@@ -58,16 +58,16 @@ function renderArchetype() {
 function renderRotationComplete() {
   const st = gameState.st;
   return `<div class="semester-advance-screen">
-    <div class="sem-advance-badge">✓ SEMESTER 1 COMPLETE · ROTATIONS END</div>
+    <div class="sem-advance-badge">SEMESTER 1 COMPLETE · ROTATIONS END</div>
     <div class="sem-advance-done-label">The Naive Years</div>
     <div class="sem-advance-title">Choose Your Lab</div>
     <div class="sem-advance-next-label">The Most Important Decision of Your PhD</div>
     <div class="sem-advance-flavor">You spent the semester rotating through labs. You've seen the famous PI with no time for students. The warm one with no publications. The new one still figuring it out.<br><br>Now you have to commit. One advisor. One research direction. The next four to six years of your life.</div>
     <div class="sem-advance-stats">
-      <span>🧠 ${st.mind}</span>
-      <span>💪 ${st.body}</span>
-      <span>💰 ${st.wallet}</span>
-      <span>🤝 ${st.bonds}</span>
+      <span>${statIcon('mind')} ${st.mind}</span>
+      <span>${statIcon('body')} ${st.body}</span>
+      <span>${statIcon('wallet')} ${st.wallet}</span>
+      <span>${statIcon('bonds')} ${st.bonds}</span>
     </div>
     <button class="sem-advance-btn" onclick="continueToPI()">Choose Your Advisor →</button>
     <div style="font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
@@ -84,10 +84,10 @@ function renderPISelection() {
     const locked = !unlocked.includes(key);
     html += `
       <div class="arch-card ${locked ? 'locked' : ''}" ${!locked ? `onclick="selectPI('${key}')"` : ''}>
-        <div class="arch-emoji">${data.emoji}</div>
+        <div class="arch-emoji">${piIcon(key)}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-desc">${data.desc}</div>
-        ${locked ? `<div class="arch-locked-msg">🔒 ${key === 'exploiter' ? 'Get the Mastered Out ending' : key === 'dynasty' ? 'Get the Defended ending' : 'Unlock by playing'}</div>` : ''}
+        ${locked ? `<div class="arch-locked-msg"><span class="lock">Locked</span> ${key === 'exploiter' ? 'Get the Mastered Out ending' : key === 'dynasty' ? 'Get the Defended ending' : 'Unlock by playing'}</div>` : ''}
       </div>
     `;
   });
@@ -111,16 +111,16 @@ function renderSemesterAdvance() {
   };
   const st = gameState.st;
   return `<div class="semester-advance-screen">
-    <div class="sem-advance-badge">✓ SEMESTER ${done} COMPLETE</div>
+    <div class="sem-advance-badge">SEMESTER ${done} COMPLETE</div>
     <div class="sem-advance-done-label">${semLabels[done] || ''}</div>
     <div class="sem-advance-title">Entering Semester ${next}</div>
     <div class="sem-advance-next-label">${semLabels[next] || ''}</div>
     <div class="sem-advance-flavor">${flavors[next] || ''}</div>
     <div class="sem-advance-stats">
-      <span>🧠 ${st.mind}</span>
-      <span>💪 ${st.body}</span>
-      <span>💰 ${st.wallet}</span>
-      <span>🤝 ${st.bonds}</span>
+      <span>${statIcon('mind')} ${st.mind}</span>
+      <span>${statIcon('body')} ${st.body}</span>
+      <span>${statIcon('wallet')} ${st.wallet}</span>
+      <span>${statIcon('bonds')} ${st.bonds}</span>
     </div>
     <div class="sem-advance-cost">Cost of living: Wallet −1</div>
     <button class="sem-advance-btn" onclick="continueSemester()">Enter Semester ${next} →</button>
@@ -130,13 +130,12 @@ function renderSemesterAdvance() {
 
 function fxHints(fx) {
   if (!fx) return '';
-  const icons = {mind:'🧠', body:'💪', wallet:'💰', bonds:'🤝'};
-  const visible = Object.entries(fx).filter(([k]) => icons[k]);
+  const shown = ['mind', 'body', 'wallet', 'bonds'];
+  const visible = Object.entries(fx).filter(([k]) => shown.includes(k));
   if (!visible.length) return '';
   return '<div class="fx-hints">' + visible.map(([k,v]) => {
-    const arrow = v > 0 ? '↑' : '↓';
     const cls = v > 0 ? 'up' : 'down';
-    return `<span class="fx-hint ${cls}">${icons[k]}${arrow}</span>`;
+    return `<span class="fx-hint ${cls}">${statIcon(k)}${v > 0 ? '↑' : '↓'}</span>`;
   }).join('') + '</div>';
 }
 
@@ -147,21 +146,21 @@ function renderPlay() {
 
   // Single-line run status. The game title, full archetype name and phase caption
   // used to be re-rendered above every card — pure repetition that pushed the
-  // card down the viewport. Archetype survives as its emoji (name on hover).
+  // card down the viewport. Archetype survives as its mark (name on hover).
   let html = `<div class="header">
-    <span class="run-arch" title="${arch ? arch.name : 'Unknown'}">${arch ? arch.emoji : '❓'}</span>
+    <span class="run-arch" title="${arch ? arch.name : 'Unknown'}">${arch ? archIcon(gameState.archetype) : ''}</span>
     <span class="semester-badge">S${gameState.semester}/10</span>
     <span class="phase-label">${SEM_LABELS[gameState.semester] || 'The Reckoning'}</span>
   </div>`;
 
   const statDefs = [
-    {key:'mind', emoji:'🧠', name:'Mind'}, {key:'body', emoji:'💪', name:'Body'},
-    {key:'wallet', emoji:'💰', name:'Wallet'}, {key:'bonds', emoji:'🤝', name:'Bonds'}
+    {key:'mind', name:'Mind'}, {key:'body', name:'Body'},
+    {key:'wallet', name:'Wallet'}, {key:'bonds', name:'Bonds'}
   ];
   html += `<div class="stats-bar">${statDefs.map(s => {
     const v = gameState.st[s.key];
     const zone = v > 50 ? 'green' : v > 25 ? 'yellow' : 'red';
-    return `<div class="stat-item"><div class="stat-top"><span class="stat-emoji">${s.emoji}</span><span class="stat-name">${s.name}</span><span class="stat-value">${v}</span></div><div class="stat-bar ${zone}"><div class="stat-fill" style="width:${v}%"></div></div></div>`;
+    return `<div class="stat-item"><div class="stat-top"><span class="stat-emoji">${statIcon(s.key)}</span><span class="stat-name">${s.name}</span><span class="stat-value">${v}</span></div><div class="stat-bar ${zone}"><div class="stat-fill" style="width:${v}%"></div></div></div>`;
   }).join('')}</div>`;
 
   const researchThresholds = {ms_quals: gameState.archetype === 'biologist' ? 30 : 25, ms_committee_1: 25, ms_committee_2: 35, ms_defense: 30};
@@ -169,7 +168,7 @@ function renderPlay() {
     const threshold = researchThresholds[card.id];
     const val = gameState.st.research;
     const ok = val >= threshold;
-    html += `<div class="research-reveal ${ok ? 'ok' : 'warn'}">📊 Research: <strong>${val}</strong> <span class="research-threshold">· ${threshold} required</span></div>`;
+    html += `<div class="research-reveal ${ok ? 'ok' : 'warn'}">${statIcon('research')} Research: <strong>${val}</strong> <span class="research-threshold">· ${threshold} required</span></div>`;
   }
 
   const networkFlavor = {
@@ -193,7 +192,7 @@ function renderPlay() {
     <div class="card-ghost"></div>
     <div class="card-ghost"></div>
     <div class="card" id="card" ontouchstart="startDrag(event)" ontouchmove="moveDrag(event)" ontouchend="endDrag(event)" onmousedown="startDrag(event)" onmousemove="moveDrag(event)" onmouseup="endDrag(event)" onmouseleave="endDrag(event)">
-      <div><div class="card-emoji">${card.emoji}</div><div class="card-tag">${card.tag}</div><div class="card-title">${card.title}</div></div>
+      <div><div class="card-emoji">${cardArt(card)}</div><div class="card-tag">${card.tag}</div><div class="card-title">${card.title}</div></div>
       <div class="card-body">${card.body}</div>
       <div class="card-hints">
         <div class="card-hint" id="hintL">${card.cL}</div>
@@ -226,13 +225,13 @@ function renderEnding() {
   const cards = gameState.totalCards;
   const endingData = {
     defended: {
-      emoji: '🎓', title: 'Dr. You',
+      title: 'Dr. You',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: `You stood in front of your committee and defended your research. There were hard questions. You answered most of them. They approved you anyway. Dr. is a title you now possess.<br><br>${networkMsg}`,
       shareText: `Played ${archName}${piPhrase} and actually made it to defense. Semester ${sem}, ${cards} cards.\nUGA Grad Survivor:`,
     },
     mastered_out: {
-      emoji: '📜', title: 'You Got the Master\'s',
+      title: 'You Got the Master\'s',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: gameState.network > 30
         ? 'The master\'s opens a door your PhD would have kept closed. A contact from the conference two years ago is now a hiring manager. You send one email. They respond in an hour.'
@@ -240,19 +239,19 @@ function renderEnding() {
       shareText: `${archName}${piPhrase}. Left with a master\'s in semester ${sem}. Nobody\'s calling it quitting.\nUGA Grad Survivor:`,
     },
     burnt_out: {
-      emoji: '🧠', title: 'Burnt Out',
+      title: 'Burnt Out',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'The 2am sessions. The unanswered emails. The feedback that felt more like verdict than guidance. It accumulated until it didn\'t. Your mind needed rest. The program didn\'t stop to notice.',
       shareText: `${archName}${piPhrase}. The mind gave out in semester ${sem}. ${cards} cards deep.\nUGA Grad Survivor:`,
     },
     hospitalized: {
-      emoji: '🏥', title: 'Hospitalized',
+      title: 'Hospitalized',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'Your body filed a formal complaint. The all-nighters, the skipped meals, the stress — it all came due at once. The ER copay was $500. Your advisor asked when you\'d be back.',
       shareText: `${archName}${piPhrase}. Body filed a formal complaint in semester ${sem}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
     broke: {
-      emoji: '💸', title: 'Financially Liquidated',
+      title: 'Financially Liquidated',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: gameState.network > 30
         ? 'An email arrives before your card declines a second time. Someone you met at a poster session has a contract role. Two weeks of work. Enough to breathe. Networks pay out in strange moments.'
@@ -260,7 +259,7 @@ function renderEnding() {
       shareText: `${archName}${piPhrase}. Card declined in semester ${sem}. The stipend wasn\'t enough.\nUGA Grad Survivor:`,
     },
     disappeared: {
-      emoji: '👻', title: 'Disappeared',
+      title: 'Disappeared',
       subtitle: `Semester ${sem} · ${runInfo}`,
       body: 'You stopped responding to messages. You stopped showing up to lab meeting. One day your desk was empty. Nobody knows when exactly you left. The department sent one email. Nobody followed up.',
       shareText: `${archName}${piPhrase}. Just stopped showing up in semester ${sem}. Nobody sent a follow-up.\nUGA Grad Survivor:`,
@@ -282,17 +281,17 @@ function renderEnding() {
   const totalPool = PHASE1_CARDS.length + PHASE2_CARDS.length + PHASE3_CARDS.length + UNIVERSAL_CARDS.length + CALLBACK_CARDS.length + EXCLUSIVE_CARDS.length + PI_EXCLUSIVE_CARDS.length + MILESTONE_CARDS.length;
 
   let html = `<div class="ending-screen">
-    <div class="ending-emoji">${d.emoji}</div>
+    <div class="ending-emoji">${endingIcon(ending)}</div>
     <div class="ending-title">${d.title}</div>
     <div class="ending-sub">${d.subtitle}</div>
     <div class="ending-body">${d.body}</div>
     ${networkHint}
     <div class="ending-stats">
-      <div class="stat-line"><span>🧠 Mind</span><span>${gameState.st.mind}</span></div>
-      <div class="stat-line"><span>💪 Body</span><span>${gameState.st.body}</span></div>
-      <div class="stat-line"><span>💰 Wallet</span><span>${gameState.st.wallet}</span></div>
-      <div class="stat-line"><span>🤝 Bonds</span><span>${gameState.st.bonds}</span></div>
-      <div class="stat-line"><span>📊 Research</span><span>${gameState.st.research}</span></div>
+      <div class="stat-line"><span>${statIcon('mind')} Mind</span><span>${gameState.st.mind}</span></div>
+      <div class="stat-line"><span>${statIcon('body')} Body</span><span>${gameState.st.body}</span></div>
+      <div class="stat-line"><span>${statIcon('wallet')} Wallet</span><span>${gameState.st.wallet}</span></div>
+      <div class="stat-line"><span>${statIcon('bonds')} Bonds</span><span>${gameState.st.bonds}</span></div>
+      <div class="stat-line"><span>${statIcon('research')} Research</span><span>${gameState.st.research}</span></div>
       <div class="stat-line" style="margin-top:6px;border-top:1px solid var(--border);padding-top:6px"><span>Cards played</span><span>${gameState.totalCards}</span></div>
       <div class="stat-line"><span>Unique cards seen</span><span>${uniqueSeen} / ${totalPool}</span></div>
     </div>
@@ -337,9 +336,9 @@ function commitRun(ending) {
 
 function renderEndingGrid() {
   const all = [
-    {id:'defended',emoji:'🎓',name:'Defended'}, {id:'mastered_out',emoji:'📜',name:"Master'd Out"},
-    {id:'burnt_out',emoji:'🧠',name:'Burnt Out'}, {id:'hospitalized',emoji:'🏥',name:'Hospitalized'},
-    {id:'broke',emoji:'💸',name:'Broke'}, {id:'disappeared',emoji:'👻',name:'Disappeared'}
+    {id:'defended',name:'Defended'}, {id:'mastered_out',name:"Master'd Out"},
+    {id:'burnt_out',name:'Burnt Out'}, {id:'hospitalized',name:'Hospitalized'},
+    {id:'broke',name:'Broke'}, {id:'disappeared',name:'Disappeared'}
   ];
   const totalPool = PHASE1_CARDS.length + PHASE2_CARDS.length + PHASE3_CARDS.length + UNIVERSAL_CARDS.length + CALLBACK_CARDS.length + EXCLUSIVE_CARDS.length + PI_EXCLUSIVE_CARDS.length + MILESTONE_CARDS.length;
   const cardsSeen = gameState.totalCards || 0;
@@ -348,8 +347,8 @@ function renderEndingGrid() {
   return `<div class="ending-grid">${all.map(e => {
     const unlocked = save.endings.includes(e.id);
     return unlocked
-      ? `<div class="ending-slot unlocked"><div class="slot-emoji">${e.emoji}</div><div class="slot-name">${e.name}</div></div>`
-      : `<div class="ending-slot locked"><div class="slot-lock">?</div><div class="slot-name">???</div></div>`;
+      ? `<div class="ending-slot unlocked"><div class="slot-emoji">${endingIcon(e.id)}</div><div class="slot-name">${e.name}</div></div>`
+      : `<div class="ending-slot locked"><div class="slot-lock"></div><div class="slot-name">???</div></div>`;
   }).join('')}</div>
   <div class="run-meta">
     ${save.endings.length}/6 endings · ${save.archetypes.length}/8 archetypes<br>
@@ -379,11 +378,11 @@ function showHelp() {
       <h2>How to Play</h2>
       <p>You're a PhD student. Every card is a situation — choose left or right. Each choice affects your stats. If any stat hits zero, your PhD is over.</p>
       <p><strong>Survive 10 semesters</strong>, pass your milestones, and keep your research up to defend.</p>
-      <div class="help-stat"><span class="emoji">🧠</span><span><strong>Mind</strong> — Sanity, focus, will to continue. Hits zero → burnt out.</span></div>
-      <div class="help-stat"><span class="emoji">💪</span><span><strong>Body</strong> — Physical health, sleep, energy. Hits zero → hospitalized.</span></div>
-      <div class="help-stat"><span class="emoji">💰</span><span><strong>Wallet</strong> — Money and funding. Low wallet drains Mind and Body.</span></div>
-      <div class="help-stat"><span class="emoji">🤝</span><span><strong>Bonds</strong> — Relationships. Low bonds drains Mind and Body. Hits zero → disappeared.</span></div>
-      <div class="help-stat"><span class="emoji">📊</span><span><strong>Research</strong> — Hidden during play. Revealed at quals, committee meetings, and defense. Too low at those checkpoints = trouble.</span></div>
+      <div class="help-stat"><span class="emoji">${statIcon('mind')}</span><span><strong>Mind</strong> — Sanity, focus, will to continue. Hits zero → burnt out.</span></div>
+      <div class="help-stat"><span class="emoji">${statIcon('body')}</span><span><strong>Body</strong> — Physical health, sleep, energy. Hits zero → hospitalized.</span></div>
+      <div class="help-stat"><span class="emoji">${statIcon('wallet')}</span><span><strong>Wallet</strong> — Money and funding. Low wallet drains Mind and Body.</span></div>
+      <div class="help-stat"><span class="emoji">${statIcon('bonds')}</span><span><strong>Bonds</strong> — Relationships. Low bonds drains Mind and Body. Hits zero → disappeared.</span></div>
+      <div class="help-stat"><span class="emoji">${statIcon('research')}</span><span><strong>Research</strong> — Hidden during play. Revealed at quals, committee meetings, and defense. Too low at those checkpoints = trouble.</span></div>
       <p style="margin-top:12px"><strong>Controls:</strong></p>
       <p>← A or Arrow Left = left choice<br>→ D or Arrow Right = right choice<br>Swipe left/right on mobile<br>Click the buttons, or use ↑↓/WS to navigate menus</p>
       <p style="margin-top:12px"><strong>Tip:</strong> Dying unlocks new archetypes and endings. You're meant to play more than once.</p>

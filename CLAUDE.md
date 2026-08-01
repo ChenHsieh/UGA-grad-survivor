@@ -14,6 +14,7 @@ python3 -m http.server 8765
 index.html              # Shell — loads all scripts, no game logic
 css/style.css           # All styles
 js/
+  art.js                # Isotype pictogram system — all card and interface marks
   engine.js             # Game loop: drawCard(), choose(), applyPerk(), applyPIPerk()
   ui.js                 # All rendering
   controls.js           # Input handling (click, keyboard, swipe)
@@ -33,6 +34,36 @@ simulation/
 
 **Total: 233 cards**
 
+## Art
+
+There are no emoji in the interface. Every mark is an inline SVG from `js/art.js`,
+drawn in the style of Otto Neurath and Gerd Arntz's Isotype (1925-40):
+
+- **Solid filled silhouettes, never outline strokes.** Detail is carried by the
+  gap between shapes. A 2px-stroke outline set is the current template default
+  and reads as generic; it also disappears at the 14px stat bar.
+- Flat front or profile view, no perspective, no shading.
+- **Quantity is repetition of a unit**, never one symbol scaled up — five coins,
+  not a bigger coin.
+- Related meanings are small additions to a shared base figure (`artFigure`).
+- Everything is `fill="currentColor"`, so all six themes work with no per-theme
+  asset.
+
+Card art is keyed to `card.tag`, so ~30 motifs cover all 233 cards, and each is
+seeded from the card id so cards sharing a motif never draw alike (233 cards →
+224 distinct drawings). `ART_CARD` overrides the tag for signature cards.
+
+| Function | Returns |
+|---|---|
+| `cardArt(card)` | the card's 64×64 mark |
+| `statIcon(key)` | 24×24 mark for a stat |
+| `endingIcon(id)`, `archIcon(key)`, `piIcon(key)` | 64×64 marks |
+
+**Adding a motif:** add it to `ART_MOTIFS`, then map tags to it in `ART_TAG`. It
+must take the seeded `r()` and vary its output — a motif that ignores `r()` makes
+every card sharing it identical. A startup guard logs any motif named in
+`ART_TAG`/`ART_CARD` but missing from `ART_MOTIFS`.
+
 ## Card Text Budget
 
 Card text is the main pacing lever — players read every word of every card.
@@ -50,8 +81,7 @@ Add to the appropriate file in `js/data/`. Card schema:
 ```js
 {
   id: 'unique_snake_case_id',
-  tag: "Tag Label",
-  emoji: "🔬",
+  tag: "Tag Label",   // also picks the card's art — see ART_TAG in js/art.js
   title: "Card Title",
   body: "Card body text.",
   cL: "Left choice label",
