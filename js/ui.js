@@ -35,7 +35,9 @@ function renderArchetype() {
     const isFirst = !locked && key === selectable[0];
     const s = data.st;
     html += `
-      <div class="arch-card ${locked ? 'locked' : ''} ${isFirst ? 'selected' : ''}" ${!locked ? `onclick="selectArchetype('${key}')"` : ''}>
+      <div class="arch-card ${locked ? 'locked' : ''} ${isFirst ? 'selected' : ''}"
+           role="button" ${locked ? 'aria-disabled="true"' : `tabindex="0" onfocus="syncMenuIndex(this)" onclick="selectArchetype('${key}')"`}
+           aria-label="${data.name}. ${data.perk}.${locked ? ' Locked.' : ''}">
         <div class="arch-emoji">${archIcon(key)}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-perk">${data.perk}</div>
@@ -81,7 +83,9 @@ function renderPISelection() {
   pis.forEach(([key, data]) => {
     const locked = !unlocked.includes(key);
     html += `
-      <div class="arch-card ${locked ? 'locked' : ''}" ${!locked ? `onclick="selectPI('${key}')"` : ''}>
+      <div class="arch-card ${locked ? 'locked' : ''}"
+           role="button" ${locked ? 'aria-disabled="true"' : `tabindex="0" onfocus="syncMenuIndex(this)" onclick="selectPI('${key}')"`}
+           aria-label="${data.name}.${locked ? ' Locked.' : ''}">
         <div class="arch-emoji">${piIcon(key)}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-desc">${data.desc}</div>
@@ -145,7 +149,8 @@ function renderPlay() {
   // Single-line run status. The game title, full archetype name and phase caption
   // used to be re-rendered above every card — pure repetition that pushed the
   // card down the viewport. Archetype survives as its mark (name on hover).
-  let html = `<div class="header">
+  let html = `<h1 class="sr-only">UGA Grad Survivor — semester ${gameState.semester} of 10</h1>
+  <div class="header">
     <span class="run-arch" title="${arch ? arch.name : 'Unknown'}">${arch ? archIcon(gameState.archetype) : ''}</span>
     <span class="semester-badge">S${gameState.semester}/10</span>
     <span class="phase-label">${SEM_LABELS[gameState.semester] || 'The Reckoning'}</span>
@@ -189,7 +194,7 @@ function renderPlay() {
   html += `<div class="card-container">
     <div class="card-ghost"></div>
     <div class="card-ghost"></div>
-    <div class="card" id="card" ontouchstart="startDrag(event)" ontouchmove="moveDrag(event)" ontouchend="endDrag(event)" onmousedown="startDrag(event)" onmousemove="moveDrag(event)" onmouseup="endDrag(event)" onmouseleave="endDrag(event)">
+    <div class="card" id="card" role="group" aria-label="Event card" ontouchstart="startDrag(event)" ontouchmove="moveDrag(event)" ontouchend="endDrag(event)" onmousedown="startDrag(event)" onmousemove="moveDrag(event)" onmouseup="endDrag(event)" onmouseleave="endDrag(event)">
       <div><div class="card-emoji">${cardArt(card)}</div><div class="card-tag">${card.tag}</div><div class="card-title">${card.title}</div></div>
       <div class="card-body">${card.body}</div>
       <div class="card-controls">

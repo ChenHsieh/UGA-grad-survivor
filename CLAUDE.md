@@ -28,9 +28,14 @@ js/
     cards-exclusive.js  # Archetype & PI exclusive cards (42 cards)
     cards-callback.js   # Unlocked by prior choices (6 cards)
     cards-milestone.js  # Milestone events (6 cards)
+tools/
+  lint-cards.js         # Text budget + art coverage check — run before committing
 simulation/
   simulation.ipynb      # Monte Carlo balance simulator
 ```
+
+Run `node tools/lint-cards.js` after touching card data. It fails the budget
+below and catches motifs referenced but undefined.
 
 **Total: 233 cards**
 
@@ -153,6 +158,20 @@ Unlockable: `exploiter` (mastered_out), `dynasty` (defended)
 ### Save System
 - `localStorage` key: `uga_grad_survivor_v2`
 - Save schema version: **3** — mismatches reset save data
+
+## Accessibility Floor
+
+Hold these when adding UI — they are verified, not aspirational:
+
+- **Contrast**: `--dim`, `--muted` and `--card-dim` are tuned per theme to clear
+  WCAG AA 4.5:1 against that theme's own background. Changing a theme colour
+  means re-checking all three.
+- **Focus**: `:focus-visible` draws a 3px `--gold` ring. Anything interactive
+  must be a `button` or carry `role="button"` + `tabindex="0"`.
+- **Reduced motion**: a `prefers-reduced-motion` block neutralises all animation.
+  The low-stat pulse would otherwise loop forever.
+- Keyboard nav and Tab share `menuIndex` via `syncMenuIndex()` — a card that is
+  focused is the card Space selects.
 
 ## Do Not Change
 - Milestone card effects — difficulty curve is calibrated

@@ -16,7 +16,18 @@ function highlightArchetype(index) {
     else c.classList.remove('selected');
   });
   // Scroll into view
-  if (cards[index]) cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (cards[index]) {
+    cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (document.activeElement !== cards[index]) cards[index].focus({ preventScroll: true });
+  }
+}
+
+// Tab and the W/S menu are two ways to move through the same list; keep them in
+// step so Space always acts on whatever is actually focused.
+function syncMenuIndex(el) {
+  const cards = [...document.querySelectorAll('.arch-card:not(.locked)')];
+  const i = cards.indexOf(el);
+  if (i >= 0) { menuIndex = i; cards.forEach((c, n) => c.classList.toggle('selected', n === i)); }
 }
 
 function startDrag(e) {
