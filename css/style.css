@@ -78,7 +78,7 @@ body {
 .stat-bar.red .stat-fill { background: var(--red); animation: pulse 1.5s infinite; }
 .stat-bar.yellow .stat-fill { background: #f39c12; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-.card-container { position: relative; height: min(496px, 60vh); margin-bottom: 12px; perspective: 1000px; }
+.card-container { position: relative; height: min(460px, 60vh); margin-bottom: 12px; perspective: 1000px; }
 .card-ghost { position: absolute; width: 100%; height: 100%; background: var(--card-bg); border: 2px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; top: 0; left: 0; opacity: 0.15; transform-origin: center; }
 .card-ghost:nth-child(1) { transform: translateY(6px) scale(0.97); }
 .card-ghost:nth-child(2) { transform: translateY(12px) scale(0.94); }

@@ -336,7 +336,7 @@ function applyPerk(arch, stat, delta, card) {
       break;
     case 'fun_haver':
       if (stat === 'bonds' && delta > 0) return Math.floor(delta * 1.5);
-      if (stat === 'research' && delta > 0) return Math.max(1, Math.floor(delta * 0.75));
+      if (stat === 'research' && delta > 0) return Math.max(1, Math.floor(delta * 0.5));
       break;
     case 'global_student':
       if (stat === 'bonds' && delta < 0) return Math.ceil(delta * 0.75);
@@ -382,7 +382,7 @@ function applyPIPerk(piType, stat, delta, card) {
       if (stat === 'bonds' && delta < 0 && isAdvisor) return Math.floor(delta * 1.3);
       break;
     case 'mentor':
-      if (delta < 0 && isAdvisor) return Math.min(delta + 1, 0);
+      if (delta < 0 && isAdvisor) return Math.min(delta + 3, 0);
       if (stat === 'bonds' && delta > 0 && isAdvisor) return Math.floor(delta * 1.2);
       if (stat === 'research' && delta > 0) return Math.min(delta, 10);
       break;
