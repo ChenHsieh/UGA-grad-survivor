@@ -22,8 +22,8 @@ js/
     archetypes.js       # ARCHETYPE_DATA
     pi-data.js          # PI_DATA
     cards-phase1.js     # Semesters 1–2 (19 cards)
-    cards-phase2.js     # Semesters 3–6 (99 cards)
-    cards-phase3.js     # Semesters 7–10 (22 cards)
+    cards-phase2.js     # Semesters 3–6 (97 cards)
+    cards-phase3.js     # Semesters 7–10 (24 cards)
     cards-universal.js  # Always available (39 cards)
     cards-exclusive.js  # Archetype & PI exclusive cards (42 cards)
     cards-callback.js   # Unlocked by prior choices (6 cards)
@@ -115,6 +115,19 @@ Stat keys: `mind`, `body`, `wallet`, `bonds`, `research`, `network`
 
 `commitRun()` in `ui.js` persists a finished run to `save` — it is guarded by
 `gameState.runCommitted` and must be called before any HTML that reads `save`.
+
+## Card Draw Rules (`drawCard()`)
+
+- A phase deck only draws inside its own semester window — phase 1 is semesters
+  1–2, phase 2 is 3–6, phase 3 is 7–10. **A `minSem`/`maxSem` outside that
+  window makes the card unreachable**; the linter fails on it.
+- **Semester 1 is the establishing act.** It draws from the phase-1 deck alone —
+  no universal, exclusive or callback cards. Those three would otherwise swamp
+  it: universal outnumbers phase-1 34 to 17, and exclusives enter at 2x weight.
+- The first card of a run is always one flagged `opener: true`. Without it the
+  game's thesis card was a 1-in-51 shot at the top of a run.
+- Callbacks need distance from their setup card, so they are also held back
+  until semester 2.
 
 ## Game Mechanics
 

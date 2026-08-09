@@ -34,5 +34,7 @@ const PHASE3_CARDS = [
   { id:'advisor_conflict_of_interest', minSem:7, tag:'Cruel', emoji:'🎭', title:'Your Advisor Is Reviewing Your Competition', body:"Your advisor is on the review panel for your competitor's grant — the same competitor who just published your unpublished approach. 'I recused myself,' they say.", cL:"Ask the chair", cR:"Swallow it", eL:{bonds:-20, mind:+5, research:-5}, eR:{mind:-20, bonds:-5, research:-5} },
 
   { id:'practice_defense', minSem:9, tag:"Preparation", emoji:"🎙️", title:"Practice Defense", body:"Your lab runs a practice defense. Someone asks why you didn't use a different statistical framework. You don't have a good answer. The real one is in nine days.", cL:"Overhaul your slides", cR:"Prep the weak spots", eL:{mind:-15, bonds:+10, research:+5}, eR:{mind:+5, bonds:+5, research:+5} },
-  // Duplicate cards removed — they exist in UNIVERSAL_CARDS
+  // Duplicate cards removed — they exist in UNIVERSAL_CARDS,
+  { id:'someone_submitted', minSem: 7, tag:"Lab Politics", emoji:"🏆", title:"Someone Submitted Before You", body:"A labmate six months behind you just submitted. There's cake. You eat the cake. The cake is good. Inside you are fine. Probably.", cL:"Celebrate genuinely", cR:"Go home and work", eL:{bonds:+20, mind:-10, research:-5}, eR:{mind:-15, bonds:-10, research:+5} },
+  { id:'imposter_vindicated', minSem:8, tag:'Cruel', emoji:'🪞', title:'You Were Right to Feel Like an Imposter', body:"Your committee found a fundamental error in Chapter 2. The framework you've used for eight months is wrong. You rerun everything. Your defense is in six weeks.", cL:"Ask for 3 more months", cR:"Fix it in 6 weeks", eL:{bonds:-10, mind:-5, body:+5, research:+5}, eR:{body:-20, mind:-10, wallet:-5, research:+10} }
 ];

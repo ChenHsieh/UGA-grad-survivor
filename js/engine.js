@@ -63,7 +63,20 @@ function drawCard() {
   else if (phase === 2) cardPool = PHASE2_CARDS;
   else cardPool = PHASE3_CARDS;
 
-  cardPool = cardPool.concat(UNIVERSAL_CARDS);
+  // Opening beat. A run always starts on a card flagged `opener`, so the game
+  // states what it is before the deck goes random. Without this the thesis card
+  // ("Welcome to the Program") was a 1-in-51 shot at the top of a run.
+  if (gameState.totalCards === 0) {
+    const openers = cardPool.filter(c => c.opener);
+    if (openers.length) return openers[Math.floor(Math.random() * openers.length)];
+  }
+
+  // Semester 1 is the establishing act: it draws from the phase deck only, so
+  // every card in it is about arriving. The universal life deck outnumbers the
+  // arrival cards 34 to 17, and the archetype-exclusive cards below enter at 2x
+  // weight — in a pool this small both would drown out the opening.
+  const establishing = gameState.semester === 1;
+  if (!establishing) cardPool = cardPool.concat(UNIVERSAL_CARDS);
   // Filter by semester range (cards with minSem/maxSem only appear in that window)
   const sem = gameState.semester;
   cardPool = cardPool.filter(c => {
@@ -72,14 +85,16 @@ function drawCard() {
     return true;
   });
   cardPool = cardPool.filter(c => !gameState.memory.includes(c.id));
-  cardPool = cardPool.concat(CALLBACK_CARDS.filter(c => {
+  // Callbacks reference things that happened "in Year 1" — they need distance
+  // from their setup card, which semester 1 cannot give them.
+  if (!establishing) cardPool = cardPool.concat(CALLBACK_CARDS.filter(c => {
     if (gameState.memory.includes(c.id)) return false;
     if (c.requires && !c.requires.every(r => gameState.memory.includes(r))) return false;
     return true;
   }));
 
   // Add archetype-exclusive cards (weighted 2x for more frequent appearance)
-  const archExclusive = EXCLUSIVE_CARDS.filter(c => c.exclusive === gameState.archetype && !gameState.memory.includes(c.id));
+  const archExclusive = establishing ? [] : EXCLUSIVE_CARDS.filter(c => c.exclusive === gameState.archetype && !gameState.memory.includes(c.id));
   archExclusive.forEach(c => { if (c.minSem && sem < c.minSem) return; if (c.maxSem && sem > c.maxSem) return; cardPool.push(c); cardPool.push(c); }); // 2x weight
   // Add PI-exclusive cards (weighted 2x)
   if (gameState.piType) {
@@ -382,7 +397,7 @@ function applyPIPerk(piType, stat, delta, card) {
       if (stat === 'bonds' && delta < 0 && isAdvisor) return Math.floor(delta * 1.3);
       break;
     case 'mentor':
-      if (delta < 0 && isAdvisor) return Math.min(delta + 3, 0);
+      if (delta < 0 && isAdvisor) return Math.ceil(delta * 0.5);
       if (stat === 'bonds' && delta > 0 && isAdvisor) return Math.floor(delta * 1.2);
       if (stat === 'research' && delta > 0) return Math.min(delta, 10);
       break;

@@ -59,6 +59,23 @@ for (const c of cards) {
   if (!c.tag) fail.push(`${c.id}: missing tag (art is keyed to it)`);
 }
 
+// ── reachability ────────────────────────────────────────────────────────
+// A phase deck only draws inside its own semester window, so a minSem/maxSem
+// that falls outside it can never be satisfied and the card is dead on arrival.
+const PHASE_WINDOW = { PHASE1_CARDS: [1, 2], PHASE2_CARDS: [3, 6], PHASE3_CARDS: [7, 10] };
+for (const [pool, [lo, hi]] of Object.entries(PHASE_WINDOW)) {
+  for (const c of X.pools[pool]) {
+    if (c.minSem > hi) fail.push(`${c.id}: minSem ${c.minSem} but ${pool} only draws in semesters ${lo}-${hi} — unreachable`);
+    if (c.maxSem < lo) fail.push(`${c.id}: maxSem ${c.maxSem} but ${pool} only draws in semesters ${lo}-${hi} — unreachable`);
+  }
+}
+// Semester 1 draws from the phase-1 deck alone, so it needs enough ungated
+// cards to fill the two slots after the opener without repeating.
+const openers = X.pools.PHASE1_CARDS.filter(c => c.opener);
+if (!openers.length) fail.push('no card flagged `opener` — runs would start on a random card');
+const sem1 = X.pools.PHASE1_CARDS.filter(c => !c.minSem || c.minSem <= 1);
+if (sem1.length < 6) fail.push(`only ${sem1.length} phase-1 cards available in semester 1 — pool too thin`);
+
 // ── art coverage ────────────────────────────────────────────────────────
 const missing = [...new Set([...Object.values(X.ART_TAG), ...Object.values(X.ART_CARD)])]
   .filter(m => typeof X.ART_MOTIFS[m] !== 'function');
