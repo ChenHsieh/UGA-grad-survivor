@@ -19,6 +19,11 @@ const ARCH_UNLOCK_HINTS = {
   neurodivergent: 'Get the Burnt Out ending',
 };
 
+// Attribute-safe escaping. The Biologist's perk is '"Can I Send You My Data?"',
+// whose quotes closed the aria-label early and turned the rest into stray
+// attributes (can="" i="" send="" you="").
+const esc = v => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 const SEM_LABELS = {
   1:'The Naive Years', 2:'The Naive Years',
   3:'The Grind', 4:'The Grind', 5:'Deep In It', 6:'Deep In It',
@@ -37,7 +42,7 @@ function renderArchetype() {
     html += `
       <div class="arch-card ${locked ? 'locked' : ''} ${isFirst ? 'selected' : ''}"
            role="button" ${locked ? 'aria-disabled="true"' : `tabindex="0" onfocus="syncMenuIndex(this)" onclick="selectArchetype('${key}')"`}
-           aria-label="${data.name}. ${data.perk}.${locked ? ' Locked.' : ''}">
+           aria-label="${esc(data.name)}. ${esc(data.perk)}.${locked ? ' Locked.' : ''}">
         <div class="arch-emoji">${archIcon(key)}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-perk">${data.perk}</div>
@@ -85,7 +90,7 @@ function renderPISelection() {
     html += `
       <div class="arch-card ${locked ? 'locked' : ''}"
            role="button" ${locked ? 'aria-disabled="true"' : `tabindex="0" onfocus="syncMenuIndex(this)" onclick="selectPI('${key}')"`}
-           aria-label="${data.name}.${locked ? ' Locked.' : ''}">
+           aria-label="${esc(data.name)}.${locked ? ' Locked.' : ''}">
         <div class="arch-emoji">${piIcon(key)}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-desc">${data.desc}</div>
@@ -151,7 +156,7 @@ function renderPlay() {
   // card down the viewport. Archetype survives as its mark (name on hover).
   let html = `<h1 class="sr-only">UGA Grad Survivor — semester ${gameState.semester} of 10</h1>
   <div class="header">
-    <span class="run-arch" title="${arch ? arch.name : 'Unknown'}">${arch ? archIcon(gameState.archetype) : ''}</span>
+    <span class="run-arch" title="${esc(arch ? arch.name : 'Unknown')}">${arch ? archIcon(gameState.archetype) : ''}</span>
     <span class="semester-badge">S${gameState.semester}/10</span>
     <span class="phase-label">${SEM_LABELS[gameState.semester] || 'The Reckoning'}</span>
   </div>`;
@@ -172,6 +177,12 @@ function renderPlay() {
     const val = gameState.st.research;
     const ok = val >= threshold;
     html += `<div class="research-reveal ${ok ? 'ok' : 'warn'}">${statIcon('research')} Research: <strong>${val}</strong> <span class="research-threshold">· ${threshold} required</span></div>`;
+  }
+
+  // The delay option carries no stat effects, so fxHints() draws nothing and the
+  // re-queued card is textually identical to the first. Say the quiet part.
+  if (card.id === 'ms_defense_sched' && gameState.memory.includes('defense_delayed')) {
+    html += `<div class="research-reveal warn">You already pushed this back once. Delaying again ends the run.</div>`;
   }
 
   const networkFlavor = {

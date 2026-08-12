@@ -89,7 +89,7 @@ for (const c of cards) {
 const fellBack = (byMotif.mark || []).length;
 if (fellBack) warn.push(`${fellBack} cards fall back to the generic mark — add a tag mapping`);
 for (const [m, svgs] of Object.entries(byMotif)) {
-  if (svgs.length > 2 && new Set(svgs).size / svgs.length < 0.6) {
+  if (svgs.length > 1 && new Set(svgs).size / svgs.length < 0.6) {
     warn.push(`motif "${m}": ${svgs.length} cards but only ${new Set(svgs).size} distinct drawings — vary it on r()`);
   }
 }

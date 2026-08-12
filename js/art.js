@@ -313,7 +313,10 @@ const ART_MOTIFS = {
   },
 
   mask(r) {
-    return `<path d="M10 18h20v14a10 10 0 0 1-20 0z"/><path d="M34 18h20v14a10 10 0 0 1-20 0z" opacity=".35"/>`;
+    const gap = artInt(r, 2, 6), h = artInt(r, 12, 17), w = artR((56 - gap) / 2);
+    const dimLeft = r() > 0.5, dim = artR(0.28 + r() * 0.18);
+    const half = (x, o) => `<path d="M${x} 18h${w}v${h}a${artR(w / 2)} ${artR(w / 2)} 0 0 1-${w} 0z"${o ? ` opacity="${o}"` : ''}/>`;
+    return half(4, dimLeft ? dim : 0) + half(artR(4 + w + gap), dimLeft ? 0 : dim);
   },
 
   puzzle(r) {
@@ -322,8 +325,15 @@ const ART_MOTIFS = {
   },
 
   barbell(r) {
-    return `<rect x="8" y="26" width="6" height="16"/><rect x="16" y="20" width="7" height="28"/>` +
-      `<rect x="23" y="31" width="18" height="6"/><rect x="41" y="20" width="7" height="28"/><rect x="50" y="26" width="6" height="16"/>`;
+    // inner and bar are continuous rather than bucketed: with six integer
+    // dimensions two cards can quantize into identical buckets (leg_day_vs_lab
+    // and protein_budget did, at odds of about 1 in 5000).
+    const inner = artR(23 + r() * 9), outer = artInt(r, 14, 18), bar = artR(4 + r() * 4);
+    const ix = artInt(r, 15, 18), ox = artInt(r, 6, 9), pw = artInt(r, 6, 8);
+    const iy = artR(32 - inner / 2), oy = artR(32 - outer / 2);
+    return `<rect x="${ox}" y="${oy}" width="6" height="${outer}"/><rect x="${ix}" y="${iy}" width="${pw}" height="${inner}"/>` +
+      `<rect x="${ix + pw}" y="${artR(32 - bar / 2)}" width="${artR(64 - 2 * (ix + pw))}" height="${bar}"/>` +
+      `<rect x="${artR(64 - ix - pw)}" y="${iy}" width="${pw}" height="${inner}"/><rect x="${artR(58 - ox)}" y="${oy}" width="6" height="${outer}"/>`;
   },
 
   confetti(r) {

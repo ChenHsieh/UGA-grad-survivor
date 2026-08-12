@@ -41,7 +41,13 @@ body {
   border-radius: 12px; padding: 16px 18px; margin-bottom: 10px;
   cursor: pointer; transition: border-color 0.2s, transform 0.2s; position: relative; overflow: hidden;
 }
-.arch-card.locked { opacity: 0.5; cursor: not-allowed; }
+.arch-card.locked { cursor: not-allowed; }
+/* Dim the card content but not the unlock hint — a blanket opacity here
+   composited the hint down to ~2:1 and undid the AA retune below. */
+.arch-card.locked > *:not(.arch-locked-msg) { opacity: 0.45; }
+/* --dim is tuned against --bg; this hint sits on the lighter --surface,
+   so it takes --text to stay above 4.5:1 in every theme. */
+.arch-card.locked .arch-locked-msg { color: var(--text); }
 .arch-card:not(.locked):hover, .arch-card.selected { border-color: var(--gold); transform: translateY(-2px); }
 .arch-card.selected { box-shadow: 0 0 0 2px var(--gold), 0 4px 16px rgba(212,160,23,0.2); }
 .arch-card .arch-emoji { margin-bottom: 8px; line-height: 0; }
@@ -115,7 +121,7 @@ body {
 /* Picker + ending marks. */
 .pick-art { width: 30px; height: 30px; display: block; }
 .ending-art { width: 64px; height: 64px; display: block; margin: 0 auto; }
-.arch-locked-msg .lock { font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 10px; opacity: .75; }
+.arch-locked-msg .lock { font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 10px; }
 .card-tag { font-family: var(--font-sans); font-size: 11px; color: var(--card-dim); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; font-weight: 700; }
 .card-title { font-family: var(--font-serif); font-size: 20px; font-weight: 700; margin-bottom: 10px; line-height: 1.25; }
 .card-body { font-family: var(--font-sans); font-size: 15px; line-height: 1.65; margin-bottom: 8px; flex-grow: 1; overflow-y: auto; color: var(--card-text); }
@@ -307,7 +313,7 @@ body {
   --bg: #000000; --surface: #0d0d0d; --card-bg: #ffffff; --card-text: #000000;
   --red: #e00020; --gold: #e00020; --green: #888888;
   --text: #ffffff; --dim: #757575; --border: #1a1a1a;
-  --muted: #757575; --card-dim: #777777;
+  --muted: #757575; --card-dim: #767676;
   --font-mono: 'Space Mono', monospace;
   --font-serif: 'Playfair Display', serif;
   --font-sans: 'DM Sans', sans-serif;
@@ -321,7 +327,6 @@ body {
 :where(button, textarea, [role="button"], [tabindex]):focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 3px;
-  border-radius: 6px;
 }
 /* Screen readers need the stat names the sighted layout drops. */
 .sr-only {
