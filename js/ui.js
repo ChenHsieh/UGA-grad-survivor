@@ -5,7 +5,7 @@ function renderTitle() {
     <div class="title-screen">
       <h1>UGA GRAD <em>Survivor</em></h1>
       <div class="sub">BIOINFORMATICS EDITION</div>
-      <div class="tagline">A card game about surviving a PhD on \$34,738/year.<br>6 endings. 8 archetypes. 6 advisors. Swipe to find out.</div>
+      <div class="tagline">A card game about surviving a bioinformatics PhD.<br>6 endings. 8 archetypes. 6 advisors. Swipe to find out.</div>
       <button class="begin-btn" onclick="gameState.phase='archetype'; menuIndex=0; render()">Begin</button>
       <div class="press-hint">PRESS SPACE TO START</div>
       <div class="credits">by Chen Hsieh, UGA Bioinformatics PhD Candidate</div>

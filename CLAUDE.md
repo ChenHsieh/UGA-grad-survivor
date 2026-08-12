@@ -8,6 +8,18 @@ A Reigns-style card game about surviving a Bioinformatics PhD at UGA. Single-pla
 python3 -m http.server 8765
 ```
 
+## Deploying
+
+Push to the branch and let GitHub Pages build it. Do not publish preview
+artifacts — the Pages URL is the preview.
+
+## Framing
+
+This is a comedy about the texture of a bioinformatics PhD, not an advocacy
+piece about pay. Money is one of four survival stats, not the thesis. Avoid
+pinning copy to a specific stipend figure or any other number that dates —
+the game outlives the number.
+
 ## File Structure
 
 ```
