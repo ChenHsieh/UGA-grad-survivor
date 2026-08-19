@@ -10,19 +10,38 @@ function renderTitle() {
       <div class="press-hint">PRESS SPACE TO START</div>
       <div class="credits">by Chen Hsieh, UGA Bioinformatics PhD Candidate</div>
     </div>
+  <button class="help-btn" onclick="showHelp()" title="How to play">?</button>
   `;
 }
 
+// Each unlock needs a route that improving at the game does not close off. The
+// ending routes alone meant the better you played the less content you could
+// reach: competent play hits Hospitalized 0.0% of the time and Burnt Out 2.6%.
 const ARCH_UNLOCK_HINTS = {
   double_agent:   'Reach semester 7 in any run',
-  gym_bro:        'Get the Hospitalized ending',
-  neurodivergent: 'Get the Burnt Out ending',
+  gym_bro:        'Get the Hospitalized ending, or finish 3 runs',
+  neurodivergent: 'Get the Burnt Out ending, or finish 5 runs',
 };
 
 // Attribute-safe escaping. The Biologist's perk is '"Can I Send You My Data?"',
 // whose quotes closed the aria-label early and turned the rest into stray
 // attributes (can="" i="" send="" you="").
 const esc = v => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// Mastered Out has four routes in. gameState.cause names which one.
+const MASTERED_LABEL = {
+  'Failed Quals (3 attempts)': 'Failed Quals',
+  'Delayed Too Long':          'Out of Runway',
+  'Insufficient Research':     'Short at the Defense',
+  'Time':                      'Out of Time',
+};
+const MASTERED_BODY = {
+  'Failed Quals (3 attempts)': 'Three times in that room. Three times the same question you could not answer. The committee stopped scheduling a fourth.',
+  'Delayed Too Long':          'You pushed the date once, then again. The second time nobody argued. There was no semester left to push it into.',
+  'Insufficient Research':     'You made it to the room. Your committee was seated. There was simply not enough work on the table, and everyone in there knew it before you did.',
+  'Time':                      'No single thing went wrong. The semesters ran out while you were still three months from done.',
+  default:                     'The work stopped short of the degree.',
+};
 
 const SEM_LABELS = {
   1:'The Naive Years', 2:'The Naive Years',
@@ -42,23 +61,23 @@ function renderArchetype() {
     html += `
       <div class="arch-card ${locked ? 'locked' : ''} ${isFirst ? 'selected' : ''}"
            role="button" ${locked ? 'aria-disabled="true"' : `tabindex="0" onfocus="syncMenuIndex(this)" onclick="selectArchetype('${key}')"`}
-           aria-label="${esc(data.name)}. ${esc(data.perk)}.${locked ? ' Locked.' : ''}">
+           aria-label="${esc(data.name)}. ${esc(data.perk)}. Mind ${s.mind}, Body ${s.body}, Wallet ${s.wallet}, Bonds ${s.bonds}, Research ${s.research}.${locked ? ' Locked.' : ''}">
         <div class="arch-emoji">${archIcon(key)}</div>
         <div class="arch-name">${data.name}</div>
         <div class="arch-perk">${data.perk}</div>
         <div class="arch-desc">${data.desc}</div>
         <div class="arch-stats">
-          <span>${statIcon('mind')} ${s.mind}</span>
-          <span>${statIcon('body')} ${s.body}</span>
-          <span>${statIcon('wallet')} ${s.wallet}</span>
-          <span>${statIcon('bonds')} ${s.bonds}</span>
-          <span>${statIcon('research')} ${s.research}</span>
+          <span>${statIcon('mind')} Mind ${s.mind}</span>
+          <span>${statIcon('body')} Body ${s.body}</span>
+          <span>${statIcon('wallet')} Wallet ${s.wallet}</span>
+          <span>${statIcon('bonds')} Bonds ${s.bonds}</span>
+          <span>${statIcon('research')} Research ${s.research}</span>
         </div>
         ${locked ? `<div class="arch-locked-msg"><span class="lock">Locked</span> ${ARCH_UNLOCK_HINTS[key] || 'Unlock by playing'}</div>` : ''}
       </div>
     `;
   });
-  html += `</div>`;
+  html += `</div>` + `<button class="help-btn" onclick="showHelp()" title="How to play">?</button>`;
   return html;
 }
 
@@ -223,10 +242,10 @@ function renderPlay() {
 function renderEnding() {
   const ending = gameState.ending;
   const networkMsg = gameState.network > 50
-    ? 'Multiple paths are open. Industry reached out before you even updated your LinkedIn. The degree and the network landed at the same time.<br><br><em>Coming soon: Industry Escape Room</em>'
+    ? 'Multiple paths are open. Industry reached out before you even updated your LinkedIn. The degree and the network landed at the same time.'
     : gameState.network > 25
-    ? 'You have a few leads — people who remember your name from conferences, a cold email that got a warm reply. It\'s enough to start.<br><br><em>Coming soon: Post-Doc Purgatory</em>'
-    : 'The degree is real. The network isn\'t there yet. You\'ll spend the next few months explaining your work to people who weren\'t in the room.<br><br><em>Coming soon: Post-Doc Purgatory</em>';
+    ? 'You have a few leads — people who remember your name from conferences, a cold email that got a warm reply. It\'s enough to start.'
+    : 'The degree is real. The network isn\'t there yet. You\'ll spend the next few months explaining your work to people who weren\'t in the room.';
   const archName = ARCHETYPE_DATA[gameState.archetype]?.name || 'Unknown';
   const piName = gameState.piType ? PI_DATA[gameState.piType]?.name : null;
   const runInfo = piName ? `${archName} · ${piName}` : archName;
@@ -242,10 +261,13 @@ function renderEnding() {
     },
     mastered_out: {
       title: 'You Got the Master\'s',
-      subtitle: `Semester ${sem} · ${runInfo}`,
-      body: gameState.network > 30
+      subtitle: `Semester ${sem} · ${runInfo}${MASTERED_LABEL[gameState.cause] ? ' · ' + MASTERED_LABEL[gameState.cause] : ''}`,
+      // How you ran out of road matters. gameState.cause has always been set here and
+      // never read, so failing quals, delaying twice and coming up short at the
+      // defense all printed the same paragraph.
+      body: (MASTERED_BODY[gameState.cause] || MASTERED_BODY.default) + '<br><br>' + (gameState.network > 30
         ? 'The master\'s opens a door your PhD would have kept closed. A contact from the conference two years ago is now a hiring manager. You send one email. They respond in an hour.'
-        : 'The master\'s is real and the expertise is yours. What comes next is less clear. You update your resume. You start from scratch.',
+        : 'The master\'s is real and the expertise is yours. What comes next is less clear. You update your resume. You start from scratch.'),
       shareText: `${archName}${piPhrase}. Left with a master\'s in semester ${sem}. Nobody\'s calling it quitting.\nUGA Grad Survivor:`,
     },
     burnt_out: {
@@ -333,8 +355,8 @@ function commitRun(ending) {
   if (!save.endings.includes(ending)) save.endings.push(ending);
   // Unlock archetypes based on conditions
   if (!save.archetypes.includes('double_agent') && gameState.semester >= 7) save.archetypes.push('double_agent');
-  if (!save.archetypes.includes('gym_bro') && save.endings.includes('hospitalized')) save.archetypes.push('gym_bro');
-  if (!save.archetypes.includes('neurodivergent') && save.endings.includes('burnt_out')) save.archetypes.push('neurodivergent');
+  if (!save.archetypes.includes('gym_bro') && (save.endings.includes('hospitalized') || save.totalRuns >= 3)) save.archetypes.push('gym_bro');
+  if (!save.archetypes.includes('neurodivergent') && (save.endings.includes('burnt_out') || save.totalRuns >= 5)) save.archetypes.push('neurodivergent');
   // Unlock PI types
   if (!save.unlockedPIs) save.unlockedPIs = ['micromanager', 'ghost', 'mentor', 'new_pi'];
   if (!save.unlockedPIs.includes('exploiter') && save.endings.includes('mastered_out')) save.unlockedPIs.push('exploiter');

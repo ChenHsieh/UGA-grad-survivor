@@ -82,6 +82,9 @@ function drawCard() {
   cardPool = cardPool.filter(c => {
     if (c.minSem && sem < c.minSem) return false;
     if (c.maxSem && sem > c.maxSem) return false;
+    // Some cards contradict an archetype's own premise — paid outside work is
+    // not available to a student the game has already said cannot take it.
+    if (c.excludeArchetype && c.excludeArchetype === gameState.archetype) return false;
     return true;
   });
   cardPool = cardPool.filter(c => !gameState.memory.includes(c.id));

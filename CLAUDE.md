@@ -108,8 +108,9 @@ Add to the appropriate file in `js/data/`. Card schema:
   // optional:
   minSem: 3,
   maxSem: 8,
-  exclusive: 'vibe_coder',    // archetype key
-  piExclusive: 'micromanager' // PI type key
+  exclusive: 'vibe_coder',           // archetype key — only this archetype draws it
+  excludeArchetype: 'global_student', // archetype key — every archetype BUT this one
+  piExclusive: 'micromanager'        // PI type key
 }
 ```
 
@@ -140,6 +141,9 @@ Stat keys: `mind`, `body`, `wallet`, `bonds`, `research`, `network`
   game's thesis card was a 1-in-51 shot at the top of a run.
 - Callbacks need distance from their setup card, so they are also held back
   until semester 2.
+- `excludeArchetype` drops a card for one archetype. Used where a card would
+  contradict that archetype's own premise — `side_gig` and `unpaid_summer` offer
+  paid outside work the game has already said an F-1 student cannot take.
 
 ## Game Mechanics
 
@@ -150,6 +154,10 @@ Stat keys: `mind`, `body`, `wallet`, `bonds`, `research`, `network`
 - `bonds` — Hits 0 → **Disappeared**
 - `research` — Gated at milestones; hitting 0 does NOT end the game
 - `network` — Hidden; affects **Defended** flavor text
+
+`gameState.cause` records *how* a run ended and is read by `renderEnding()` to
+pick the Mastered Out copy — the four routes in (failed quals, delayed twice,
+short at the defense, out of time) each get their own paragraph and subtitle.
 
 ### Passive Drains (per card, in `choose()`)
 - `wallet < 20`: Mind −2, Body −2
@@ -164,7 +172,12 @@ Stat keys: `mind`, `body`, `wallet`, `bonds`, `research`, `network`
 
 ### Archetypes (8)
 Default: `overachiever`, `vibe_coder`, `fun_haver`, `global_student`, `biologist`
-Unlockable: `double_agent` (sem 7), `gym_bro` (hospitalized), `neurodivergent` (burnt_out)
+Unlockable: `double_agent` (sem 7), `gym_bro` (hospitalized **or** 3 runs),
+`neurodivergent` (burnt_out **or** 5 runs)
+
+Every unlock needs a route that playing well does not close off. Competent play
+reaches Hospitalized 0.0% of the time and Burnt Out 2.6%, so ending-only gates
+meant improving locked content away.
 
 ### PI Types (6)
 Default: `micromanager`, `ghost`, `mentor`, `new_pi`

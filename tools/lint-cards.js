@@ -76,6 +76,26 @@ if (!openers.length) fail.push('no card flagged `opener` — runs would start on
 const sem1 = X.pools.PHASE1_CARDS.filter(c => !c.minSem || c.minSem <= 1);
 if (sem1.length < 6) fail.push(`only ${sem1.length} phase-1 cards available in semester 1 — pool too thin`);
 
+// A duplicate key in an effect object parses fine and silently drops the earlier
+// value, so `research:+5, research:-5` ships as -5. Only the raw text shows it.
+for (const f of fs.readdirSync(path.join(ROOT, 'js/data')).filter(f => f.startsWith('cards'))) {
+  fs.readFileSync(path.join(ROOT, 'js/data', f), 'utf8').split('\n').forEach((line, i) => {
+    const id = (line.match(/\bid:\s*['"]([^'"]+)['"]/) || [])[1];
+    for (const m of line.matchAll(/\be[LR]:\s*\{([^}]*)\}/g)) {
+      const keys = [...m[1].matchAll(/(\w+)\s*:/g)].map(k => k[1]);
+      const dupe = keys.find((k, n) => keys.indexOf(k) !== n);
+      if (dupe) fail.push(`${id || f + ':' + (i + 1)}: effect object repeats "${dupe}" — the earlier value is silently dropped`);
+    }
+  });
+}
+
+// excludeArchetype must name a real archetype or it silently never fires.
+for (const c of cards) {
+  if (c.excludeArchetype && !X.ARCHETYPE_DATA[c.excludeArchetype]) {
+    fail.push(`${c.id}: excludeArchetype "${c.excludeArchetype}" is not an archetype`);
+  }
+}
+
 // ── art coverage ────────────────────────────────────────────────────────
 const missing = [...new Set([...Object.values(X.ART_TAG), ...Object.values(X.ART_CARD)])]
   .filter(m => typeof X.ART_MOTIFS[m] !== 'function');

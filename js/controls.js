@@ -75,6 +75,11 @@ document.addEventListener('keydown', function(e) {
 
   const key = e.key;
 
+  // Help is global. It used to live inside the play-phase branch below, which
+  // made it unreachable on the title and archetype screens — the two where a new
+  // player most needs it.
+  if (key === '?' || key === 'h' || key === 'H') { e.preventDefault(); showHelp(); return; }
+
   // TITLE SCREEN: Space/Enter to begin
   if (gameState.phase === 'title') {
     if (key === ' ' || key === 'Enter') {
@@ -151,9 +156,6 @@ document.addEventListener('keydown', function(e) {
     } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
       e.preventDefault();
       choose('right');
-    } else if (key === '?' || key === 'h' || key === 'H') {
-      e.preventDefault();
-      showHelp();
     }
     return;
   }
