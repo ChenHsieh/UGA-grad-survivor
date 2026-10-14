@@ -159,6 +159,16 @@ Added 7 new universal cards covering two under-represented tensions in computati
 
 ---
 
+## v0.13 — Research Matters
+2026-10-14 · *co-authored with Claude Opus 5.5*
+
+Research starts low (5 to 20 by character) and the checkpoints rise: exam 20, committees 35 and 50, defense 65. A checkpoint is checked after your answer, and one answer on each exam or committee card adds Research, so a near miss is a decision. A failed exam is retaken the next semester after that semester's cards, instead of three times in a row. Early cards all cost something. Every run opens on the first day. The run in progress survives a reload. Change numbers sit over the right bar and play once. Career contacts show in the result line and on the ending. `?seed=` replays a run. `simulation/bots.mjs` plays the rules with four bots.
+
+## v0.13.1: Plainer screens
+2026-10-14 · *co-authored with Claude Opus 5.5*
+
+A first visit opens on the first card; the title screen is now for returning players (Continue or New run). The Master's ending names the real defense line (65) instead of the old 30. Locked characters say when they open. Between-semester and ending screens use ruled rows instead of boxed tiles, a low bar gets a plain red outline instead of a glow, and the gold accent stays on Research and the main button. The tab icon is a drawn cap instead of an emoji.
+
 ## vNext — Secret Diary Cards *(planned)*
 
 A hidden card layer: personal journal entries that surface based on accumulated run history, offering narrative reflection and small stat effects.
