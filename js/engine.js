@@ -1,4 +1,5 @@
 let menuIndex = 0;
+let undoSnapshot = null;
 
 const SAVE_KEY = 'uga_grad_survivor_v2';
 
@@ -39,8 +40,12 @@ function selectArchetype(arch) {
   gameState.ending = null;
   gameState.cause = null;
   gameState.nextMilestone = null;
+  gameState.recorded = false;
+  gameState.undoUsed = false;
+  undoSnapshot = null;
   gameState.phase = 'play';
   save.totalRuns++;
+  saveSave();
   startNextSemester();
   render();
 }
@@ -102,7 +107,7 @@ function drawCard() {
     if (ms.id === 'ms_committee_2' && gameState.st.research < 35) {
       gameState.st.mind = Math.max(0, gameState.st.mind - 15);
     }
-    recordConsequenceStep('Research checkpoint');
+    recordConsequenceStep('Committee wanted more research');
     return ms;
   }
   // If semester advanced but no milestone, reset for next semester
@@ -139,6 +144,7 @@ function recordConsequenceStep(label) {
 function choose(side) {
   const card = gameState.currentCard;
   if (!card) return;
+  if (!(card.id === 'ms_rotation' && card.piSelection)) undoSnapshot = JSON.parse(JSON.stringify(gameState));
 
   // Handle PI selection (special milestone)
   if (card.id === 'ms_rotation' && card.piSelection) {
@@ -169,7 +175,7 @@ function choose(side) {
     }
     // Retry next semester — push quals back
     gameState.st.mind = Math.max(0, gameState.st.mind - 15);
-    recordConsequenceStep('Quals retry');
+    recordConsequenceStep('Failed the exam');
     gameState.memory.push('quals_retry_' + gameState.qualsAttempts);
     gameState.cardCount++;
     gameState.totalCards++;
@@ -210,7 +216,7 @@ function choose(side) {
     if (gameState.piType) finalDelta = applyPIPerk(gameState.piType, stat, finalDelta, card);
     gameState.st[stat] = Math.max(0, Math.min(100, gameState.st[stat] + finalDelta));
   });
-  recordConsequenceStep('Choice (perks included)');
+  recordConsequenceStep('Your choice');
 
   // POST-CHOICE ARCHETYPE EFFECTS
   if (gameState.archetype === 'overachiever' && gameState.totalCards % perk.everyCards === 0) {
@@ -233,14 +239,14 @@ function choose(side) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 2);
     gameState.st.body = Math.max(0, gameState.st.body - 2);
   }
-  recordConsequenceStep('Low Wallet');
+  recordConsequenceStep('Wallet under 20');
 
   // PASSIVE DRAIN: low bonds → isolation impairs cognition
   if (gameState.st.bonds < 20) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 1);
     gameState.st.body = Math.max(0, gameState.st.body - 1);
   }
-  recordConsequenceStep('Low Bonds');
+  recordConsequenceStep('Friends under 20');
 
   // PASSIVE DRAIN: low research → anxiety and advisor pressure
   if (gameState.st.research < 15 && gameState.semester >= 3) {
@@ -249,7 +255,7 @@ function choose(side) {
   if (gameState.st.research < 15 && gameState.semester >= 5) {
     gameState.st.bonds = Math.max(0, gameState.st.bonds - 2);
   }
-  recordConsequenceStep('Low Research');
+  recordConsequenceStep('Research under 15');
 
   // GLOBAL STUDENT: visa pressure in late game
   if (gameState.archetype === 'global_student' && gameState.semester >= perk.visaSemester) {
@@ -298,7 +304,7 @@ function continueSemester() {
   // PhD isolation: bonds −1 per semester from sem 6 onward (fires once per advance, not per card)
   if (gameState.semester >= 6) {
     gameState.st.bonds = Math.max(0, gameState.st.bonds - 1);
-    recordConsequenceStep('PhD isolation');
+    recordConsequenceStep('Late-PhD isolation');
     if (gameState.st.bonds <= 0) { gameState.phase='ending'; gameState.ending='disappeared'; gameState.cause='Bonds'; return render(); }
   }
   gameState.nextSemester = null;
@@ -403,4 +409,88 @@ function applyPIPerk(piType, stat, delta, card) {
       break;
   }
   return delta;
+}
+
+
+// ── Reading the state for the interface ─────────────────────────────
+
+// What a choice will do to each meter, after the player's perks, before passive drains.
+// The interface shows only which meters move and roughly how much, never the direction.
+function predictEffects(side) {
+  const card = gameState.currentCard;
+  if (!card) return {};
+  if (card.id === 'ms_quals' && gameState.st.research < qualsNeed()) return { mind: -15 };
+  const effects = side === 'left' ? card.eL : card.eR;
+  if (!effects) return {};
+  const out = {};
+  Object.entries(effects).forEach(([stat, delta]) => {
+    if (!(stat in gameState.st)) return;
+    let d = applyPerk(gameState.archetype, stat, delta, card);
+    if (gameState.piType) d = applyPIPerk(gameState.piType, stat, d, card);
+    const after = Math.max(0, Math.min(100, gameState.st[stat] + d));
+    if (after !== gameState.st[stat]) out[stat] = after - gameState.st[stat];
+  });
+  return out;
+}
+
+function dotSize(delta) {
+  const m = Math.abs(delta);
+  if (!m) return 0;
+  if (m <= 5) return 1;
+  if (m <= 10) return 2;
+  return 3;
+}
+
+function qualsNeed() {
+  return gameState.archetype === 'biologist' ? ARCHETYPE_DATA.biologist.rules.qualsResearch : 25;
+}
+
+// The next research checkpoint, drawn as a mark on the Research bar.
+function nextGate() {
+  const sem = gameState.semester, mem = gameState.memory;
+  if (!mem.includes('quals_passed')) {
+    return { id: 'ms_quals', name: 'Qualifying exam', sem: Math.max(4, sem), need: qualsNeed(), miss: 'retake next semester, Mind −15. Fail 3 times and you leave with a master’s' };
+  }
+  if (sem <= 6 && !mem.includes('committee_1_passed')) return { id: 'ms_committee_1', name: 'Committee meeting', sem: 6, need: 25, miss: 'Mind −10' };
+  if (sem <= 8 && !mem.includes('committee_2_passed')) return { id: 'ms_committee_2', name: 'Committee meeting', sem: 8, need: 35, miss: 'Mind −15' };
+  return { id: 'ms_defense', name: 'Defense', sem: 10, need: 30, miss: 'no PhD, you leave with a master’s' };
+}
+
+// Save the run's ending once, however many times the ending screen is drawn.
+function recordRun() {
+  if (gameState.recorded) return;
+  gameState.recorded = true;
+  const ending = gameState.ending;
+  save.bestSemester = Math.max(save.bestSemester || 0, gameState.semester);
+  if (ending !== 'defended') save.totalDeaths++;
+  if (!save.endings.includes(ending)) save.endings.push(ending);
+  if (!save.archetypes.includes('double_agent') && gameState.semester >= 7) save.archetypes.push('double_agent');
+  if (!save.archetypes.includes('gym_bro') && save.endings.includes('hospitalized')) save.archetypes.push('gym_bro');
+  if (!save.archetypes.includes('neurodivergent') && save.endings.includes('burnt_out')) save.archetypes.push('neurodivergent');
+  if (!save.unlockedPIs) save.unlockedPIs = ['micromanager', 'ghost', 'mentor', 'new_pi'];
+  if (!save.unlockedPIs.includes('exploiter') && save.endings.includes('mastered_out')) save.unlockedPIs.push('exploiter');
+  if (!save.unlockedPIs.includes('dynasty') && save.endings.includes('defended')) save.unlockedPIs.push('dynasty');
+  save.archetypes = [...new Set(save.archetypes)];
+  save.endings = [...new Set(save.endings)];
+  save.lastArchetype = gameState.archetype;
+  saveSave();
+}
+
+// One take-back per run: return to the card before the last choice.
+function canTakeBack() {
+  if (!undoSnapshot || gameState.undoUsed) return false;
+  if (['broke', 'hospitalized', 'burnt_out', 'disappeared'].includes(gameState.ending)) return true;
+  return gameState.ending === 'mastered_out' && gameState.cause === 'Delayed Too Long';
+}
+function takeBack() {
+  if (!canTakeBack()) return;
+  const snap = undoSnapshot;
+  undoSnapshot = null;
+  Object.keys(gameState).forEach(k => { delete gameState[k]; });
+  Object.assign(gameState, snap);
+  gameState.undoUsed = true;
+  gameState.recorded = false;
+  gameState.lastConsequence = null;
+  gameState.phase = 'play';
+  render();
 }

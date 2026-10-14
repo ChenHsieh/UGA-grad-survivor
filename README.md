@@ -13,25 +13,32 @@ Vanilla JavaScript and CSS. No package installation, build step, or game server.
 
 ## How to play
 
-Choose an archetype, survive rotations, then choose an advisor. Each card offers
-two decisions. Keep **Mind, Body, Wallet, and Bonds above zero**, build enough
-Research for checkpoints, and work toward a defense in semester 10.
+The first run starts straight on a card as the Overachiever; the character
+picker appears from the second run. After rotations you choose an advisor.
+Each card offers two answers. Keep **Mind, Body, Wallet, and Friends above
+zero**, keep Research above the next checkpoint mark, and reach the defense in
+semester 10.
 
 | Input | Action |
 | --- | --- |
-| Click a choice, swipe, or drag the card | Choose left or right |
-| Left/Right arrows or A/D | Choose during play |
+| Drag the card | Lean (dots appear), release past the edge to choose |
+| Tap an answer, then tap it again | Lean, then choose |
+| Mouse hover, then click | Lean, then choose |
+| Left/Right arrows or A/D | Lean; press again (or Enter) to choose |
 | Tab, or Up/Down arrows / W/S in selection menus | Browse archetypes or advisors |
 | Enter or Space on a focused button | Activate that button |
 | Enter or Space outside a control | Begin or continue at a checkpoint |
 | ? / H during play, or the help button | Open help and theme settings |
 | Escape | Close help |
 
-Each choice can have both gains and losses. **Last result** expands to explain
-actual changes after perks, caps, and passive drains. Pre-choice arrows show
-the card's base direction, not a guarantee of the final net change. Research
-deltas are visible afterward; its total appears at checkpoints. A separate
-network value stays hidden.
+While you lean toward an answer, a dot appears over every bar it will move,
+sized by how much (small, medium, big), after your character and advisor
+perks. The dots never show direction: the card text is the clue, as in Reigns.
+Bars you will not touch dim. A bar at 20 or below turns red, and a dot that
+could empty it pulses. After a choice the bars animate and float the change.
+Research is a visible bar with the next checkpoint drawn on it, and milestone
+cards say before you answer whether you will pass. If a choice ends the run you
+can take it back once. A separate network value stays hidden.
 
 Eight archetypes and six advisor types shape a run, with some unlocked through
 play. Five archetypes and four advisors start available. Six endings are
@@ -94,8 +101,8 @@ not establish current human completion rates.
   cross-device save, or automated accessibility certification.
 - Sharing is initiated by the player and copies ending text; nothing posts
   automatically. Clipboard behavior depends on browser permissions.
-- The interface preserves hidden Research totals and the hidden network
-  system. It does not reveal unchosen or upcoming card effects.
+- The interface shows which bars an answer moves and how much, never the
+  direction. The network value stays hidden.
 
 ## Source map
 
