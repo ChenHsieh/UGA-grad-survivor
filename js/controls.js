@@ -16,8 +16,19 @@ function highlightArchetype(index) {
     else c.classList.remove('selected');
   });
   // Scroll into view
-  if (cards[index]) cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (cards[index]) {
+    cards[index].focus({ preventScroll: true });
+    cards[index].scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+  }
 }
+
+document.addEventListener('focusin', function(e) {
+  const card = e.target.closest?.('.arch-card:not(.locked)');
+  if (!card) return;
+  const cards = [...document.querySelectorAll('.arch-card:not(.locked)')];
+  menuIndex = cards.indexOf(card);
+  cards.forEach(c => c.classList.toggle('selected', c === card));
+});
 
 function startDrag(e) {
   dragStart = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
@@ -56,14 +67,13 @@ function endDrag(e) {
 }
 
 document.addEventListener('keydown', function(e) {
-  // Close help on Escape or any key
-  if (helpVisible) {
-    closeHelp();
-    e.preventDefault();
-    return;
-  }
+  // The native dialog handles Tab and Escape; reading help never plays a card.
+  if (helpVisible) return;
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.matches?.('input, textarea, select, [contenteditable="true"]')) return;
 
   const key = e.key;
+  if ((key === ' ' || key === 'Enter') && e.target.closest?.('button, a, summary')) return;
 
   // TITLE SCREEN: Space/Enter to begin
   if (gameState.phase === 'title') {

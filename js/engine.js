@@ -5,7 +5,7 @@ const SAVE_KEY = 'uga_grad_survivor_v2';
 let save = { version: 3, endings: [], archetypes: ['overachiever', 'vibe_coder', 'fun_haver', 'global_student', 'biologist'], unlockedPIs: ['micromanager', 'ghost', 'mentor', 'new_pi'], totalRuns: 0, totalDeaths: 0, bestSemester: 0 };
 let gameState = {
   phase: 'title', archetype: null, piType: null, st: {mind:50, body:50, wallet:50, bonds:50, research:50}, semester: 1, cardCount: 0,
-  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null
+  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null, lastConsequence: null
 };
 
 function getPhase(semester) {
@@ -35,6 +35,7 @@ function selectArchetype(arch) {
   gameState.piType = null;
   gameState.memory = [];
   gameState.currentCard = null;
+  gameState.lastConsequence = null;
   gameState.ending = null;
   gameState.cause = null;
   gameState.nextMilestone = null;
@@ -101,6 +102,7 @@ function drawCard() {
     if (ms.id === 'ms_committee_2' && gameState.st.research < 35) {
       gameState.st.mind = Math.max(0, gameState.st.mind - 15);
     }
+    recordConsequenceStep('Research checkpoint');
     return ms;
   }
   // If semester advanced but no milestone, reset for next semester
@@ -118,6 +120,22 @@ function drawCard() {
   return cardPool[Math.floor(Math.random() * cardPool.length)];
 }
 
+function beginConsequence(choice) {
+  gameState.lastConsequence = { choice, before: {...gameState.st}, after: {...gameState.st}, steps: [] };
+}
+
+function recordConsequenceStep(label) {
+  const result = gameState.lastConsequence;
+  if (!result) return;
+  const deltas = {};
+  Object.keys(result.before).forEach(stat => {
+    const delta = gameState.st[stat] - result.after[stat];
+    if (delta !== 0) deltas[stat] = delta;
+  });
+  if (Object.keys(deltas).length) result.steps.push({ label, deltas });
+  result.after = {...gameState.st};
+}
+
 function choose(side) {
   const card = gameState.currentCard;
   if (!card) return;
@@ -128,6 +146,8 @@ function choose(side) {
     return;
   }
 
+  beginConsequence(side === 'left' ? card.cL : card.cR);
+  const perk = ARCHETYPE_DATA[gameState.archetype].rules;
   let effects = side === 'left' ? card.eL : card.eR;
 
   // Defense delay check
@@ -139,7 +159,7 @@ function choose(side) {
   }
 
   // Quals failure check
-  if (card.id === 'ms_quals' && gameState.st.research < (gameState.archetype === 'biologist' ? 30 : 25)) {
+  if (card.id === 'ms_quals' && gameState.st.research < (gameState.archetype === 'biologist' ? perk.qualsResearch : 25)) {
     gameState.qualsAttempts++;
     if (gameState.qualsAttempts >= 3) {
       gameState.phase = 'ending';
@@ -149,6 +169,7 @@ function choose(side) {
     }
     // Retry next semester — push quals back
     gameState.st.mind = Math.max(0, gameState.st.mind - 15);
+    recordConsequenceStep('Quals retry');
     gameState.memory.push('quals_retry_' + gameState.qualsAttempts);
     gameState.cardCount++;
     gameState.totalCards++;
@@ -189,33 +210,37 @@ function choose(side) {
     if (gameState.piType) finalDelta = applyPIPerk(gameState.piType, stat, finalDelta, card);
     gameState.st[stat] = Math.max(0, Math.min(100, gameState.st[stat] + finalDelta));
   });
+  recordConsequenceStep('Choice (perks included)');
 
   // POST-CHOICE ARCHETYPE EFFECTS
-  if (gameState.archetype === 'overachiever' && gameState.totalCards % 3 === 0) {
-    if (gameState.st.mind < 20) {
-      gameState.st.mind = Math.min(100, gameState.st.mind + 3);
+  if (gameState.archetype === 'overachiever' && gameState.totalCards % perk.everyCards === 0) {
+    if (gameState.st.mind < perk.lowMind) {
+      gameState.st.mind = Math.min(100, gameState.st.mind + perk.mindRecovery);
     }
   }
   if (gameState.archetype === 'gym_bro') {
-    if (gameState.st.body < 15) gameState.st.body = 15;
+    if (gameState.st.body < perk.bodyFloor) gameState.st.body = perk.bodyFloor;
   }
   if (gameState.archetype === 'double_agent') {
     const drainStats = ['mind', 'body', 'wallet', 'bonds'];
     const drainStat = drainStats[Math.floor(Math.random() * drainStats.length)];
-    gameState.st[drainStat] = Math.max(0, gameState.st[drainStat] - 1);
+    gameState.st[drainStat] = Math.max(0, gameState.st[drainStat] - perk.randomDrain);
   }
+  recordConsequenceStep(ARCHETYPE_DATA[gameState.archetype].perk);
 
   // PASSIVE DRAIN: financial stress
   if (gameState.st.wallet < 20) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 2);
     gameState.st.body = Math.max(0, gameState.st.body - 2);
   }
+  recordConsequenceStep('Low Wallet');
 
   // PASSIVE DRAIN: low bonds → isolation impairs cognition
   if (gameState.st.bonds < 20) {
     gameState.st.mind = Math.max(0, gameState.st.mind - 1);
     gameState.st.body = Math.max(0, gameState.st.body - 1);
   }
+  recordConsequenceStep('Low Bonds');
 
   // PASSIVE DRAIN: low research → anxiety and advisor pressure
   if (gameState.st.research < 15 && gameState.semester >= 3) {
@@ -224,11 +249,13 @@ function choose(side) {
   if (gameState.st.research < 15 && gameState.semester >= 5) {
     gameState.st.bonds = Math.max(0, gameState.st.bonds - 2);
   }
+  recordConsequenceStep('Low Research');
 
   // GLOBAL STUDENT: visa pressure in late game
-  if (gameState.archetype === 'global_student' && gameState.semester >= 7) {
-    gameState.st.mind = Math.max(0, gameState.st.mind - 2);
+  if (gameState.archetype === 'global_student' && gameState.semester >= perk.visaSemester) {
+    gameState.st.mind = Math.max(0, gameState.st.mind - perk.visaDrain);
   }
+  recordConsequenceStep('Visa pressure');
 
   if (card.sets) card.sets.forEach(flag => { if (!gameState.memory.includes(flag)) gameState.memory.push(flag); });
   gameState.memory.push(card.id);
@@ -262,13 +289,16 @@ function choose(side) {
 
 // Called from semester advance checkpoint screen
 function continueSemester() {
+  beginConsequence('Semester change');
   // Cost of living: -1 wallet each semester
   gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
+  recordConsequenceStep('Cost of living');
   if (gameState.st.wallet <= 0) { gameState.phase='ending'; gameState.ending='broke'; gameState.cause='Wallet'; return render(); }
   gameState.semester = gameState.nextSemester;
   // PhD isolation: bonds −1 per semester from sem 6 onward (fires once per advance, not per card)
   if (gameState.semester >= 6) {
     gameState.st.bonds = Math.max(0, gameState.st.bonds - 1);
+    recordConsequenceStep('PhD isolation');
     if (gameState.st.bonds <= 0) { gameState.phase='ending'; gameState.ending='disappeared'; gameState.cause='Bonds'; return render(); }
   }
   gameState.nextSemester = null;
@@ -299,6 +329,7 @@ function selectPI(piKey) {
 }
 
 function applyPerk(arch, stat, delta, card) {
+  const perk = ARCHETYPE_DATA[arch]?.rules;
   const tag = card && card.tag ? card.tag : '';
   const techTags = ['Pipeline Failure', 'Pipeline', 'Pipeline'];
   const socialTags = ['Social', 'Human Existence', 'Athens Life', 'Social Drama', 'Lab Drama'];
@@ -307,35 +338,35 @@ function applyPerk(arch, stat, delta, card) {
       // Post-choice effect handled in choose()
       break;
     case 'vibe_coder':
-      if (techTags.includes(tag) && delta > 0) return Math.floor(delta * 1.5);
-      if (socialTags.includes(tag) && delta < 0) return Math.floor(delta * 1.3);
+      if (techTags.includes(tag) && delta > 0) return Math.floor(delta * perk.techGain);
+      if (socialTags.includes(tag) && delta < 0) return Math.floor(delta * perk.socialLoss);
       break;
     case 'fun_haver':
-      if (stat === 'bonds' && delta > 0) return Math.floor(delta * 1.5);
-      if (stat === 'research' && delta > 0) return Math.max(1, Math.floor(delta * 0.75));
+      if (stat === 'bonds' && delta > 0) return Math.floor(delta * perk.bondsGain);
+      if (stat === 'research' && delta > 0) return Math.max(1, Math.floor(delta * perk.researchGain));
       break;
     case 'global_student':
-      if (stat === 'bonds' && delta < 0) return Math.ceil(delta * 0.75);
+      if (stat === 'bonds' && delta < 0) return Math.ceil(delta * perk.bondsLoss);
       break;
     case 'biologist':
       if (stat === 'research' && delta < 0 && techTags.includes(tag)) {
-        if (gameState.st.bonds > 50) return Math.ceil(delta / 2);
-        if (gameState.st.bonds < 30) return Math.floor(delta * 2);
+        if (gameState.st.bonds > perk.highBonds) return Math.ceil(delta * perk.supportedLoss);
+        if (gameState.st.bonds < perk.lowBonds) return Math.floor(delta * perk.isolatedLoss);
       }
-      if (stat === 'research' && delta > 0 && (tag === 'Lab Life' || tag === 'Lab Politics')) return Math.floor(delta * 1.3);
+      if (stat === 'research' && delta > 0 && (tag === 'Lab Life' || tag === 'Lab Politics')) return Math.floor(delta * perk.labGain);
       break;
     case 'double_agent':
-      if (stat === 'research' && delta > 0) return delta + 3;
+      if (stat === 'research' && delta > 0) return delta + perk.researchBonus;
       // Random drain handled in choose()
       break;
     case 'gym_bro':
-      if (stat === 'wallet' && delta < 0) return Math.floor(delta * 1.15);
-      if (stat === 'mind' && delta < 0) return Math.floor(delta * 1.15);
+      if (stat === 'wallet' && delta < 0) return Math.floor(delta * perk.loss);
+      if (stat === 'mind' && delta < 0) return Math.floor(delta * perk.loss);
       // Body floor handled in choose()
       break;
     case 'neurodivergent':
-      if (stat === 'mind') return Math.floor(delta * 1.3);
-      if (stat === 'research') return Math.floor(delta * 1.3);
+      if (stat === 'mind') return Math.floor(delta * perk.mindChange);
+      if (stat === 'research') return Math.floor(delta * perk.researchChange);
       break;
   }
   return delta;
