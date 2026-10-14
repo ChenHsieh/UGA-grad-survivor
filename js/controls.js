@@ -58,6 +58,7 @@ function setLean(side, source) {
   document.querySelectorAll('.card-btn').forEach(b => b.classList.toggle('leaned', b.dataset.side === side));
 
   document.querySelector('.meters')?.classList.toggle('leaning', !!side);
+  if (side) document.querySelectorAll('.meters .float').forEach(el => el.remove());
 
   const fx = side ? predictEffects(side) : {};
   document.querySelectorAll('[data-stat]').forEach(el => {

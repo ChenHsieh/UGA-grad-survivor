@@ -1,7 +1,33 @@
 let menuIndex = 0;
+
+// ?seed=anything makes the card draws repeat exactly, so a reported run can be replayed.
+(function seedFromUrl() {
+  const m = typeof location !== 'undefined' && /[?&]seed=([^&]+)/.exec(location.search);
+  if (!m) return;
+  let s = 2166136261;
+  for (const ch of decodeURIComponent(m[1])) s = Math.imul(s ^ ch.charCodeAt(0), 16777619) >>> 0;
+  Math.random = () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+})();
 let undoSnapshot = null;
 
 const SAVE_KEY = 'uga_grad_survivor_v2';
+const RUN_KEY = 'uga_grad_survivor_run';   // the run in progress, so a reload does not lose it
+
+// Research needed at each checkpoint. It rises through the PhD; the check happens after
+// your answer, so an answer that adds Research can carry you over the line.
+const GATE_NEED = { ms_quals: 20, ms_committee_1: 35, ms_committee_2: 50, ms_defense: 65 };
+const COMMITTEE_PENALTY = { ms_committee_1: 10, ms_committee_2: 15 };
+const QUALS_PENALTY = 15;
+function gateNeed(id) {
+  if (id === 'ms_quals' && gameState.archetype === 'biologist') return ARCHETYPE_DATA.biologist.rules.qualsResearch;
+  return GATE_NEED[id];
+}
 
 let save = { version: 3, endings: [], archetypes: ['overachiever', 'vibe_coder', 'fun_haver', 'global_student', 'biologist'], unlockedPIs: ['micromanager', 'ghost', 'mentor', 'new_pi'], totalRuns: 0, totalDeaths: 0, bestSemester: 0 };
 let gameState = {
@@ -52,7 +78,11 @@ function selectArchetype(arch) {
 
 function startNextSemester() {
   // Don't reset cardCount here — drawCard needs it >= 3 to serve the milestone
-  const ms = getMilestoneForSemester(gameState.semester);
+  let ms = getMilestoneForSemester(gameState.semester);
+  // A failed qualifying exam comes back the next semester, after that semester's cards.
+  if (gameState.semester > 4 && gameState.memory.includes('quals_retry_1') && !gameState.memory.includes('quals_passed')) {
+    ms = MILESTONE_CARDS.find(c => c.id === 'ms_quals');
+  }
   gameState.nextMilestone = ms;
 }
 
@@ -76,6 +106,8 @@ function drawCard() {
     return true;
   });
   cardPool = cardPool.filter(c => !gameState.memory.includes(c.id));
+  // Some cards tell the same story twice (two rent hikes); seeing one removes the other.
+  cardPool = cardPool.filter(c => !(c.excludes && c.excludes.some(id => gameState.memory.includes(id))));
   cardPool = cardPool.concat(CALLBACK_CARDS.filter(c => {
     if (gameState.memory.includes(c.id)) return false;
     if (c.requires && !c.requires.every(r => gameState.memory.includes(r))) return false;
@@ -100,19 +132,17 @@ function drawCard() {
       gameState.phase = 'rotation_complete';
       return null;
     }
-    // Committee meeting: research check affects mind
-    if (ms.id === 'ms_committee_1' && gameState.st.research < 25) {
-      gameState.st.mind = Math.max(0, gameState.st.mind - 10);
-    }
-    if (ms.id === 'ms_committee_2' && gameState.st.research < 35) {
-      gameState.st.mind = Math.max(0, gameState.st.mind - 15);
-    }
-    recordConsequenceStep('Committee wanted more research');
     return ms;
   }
   // If semester advanced but no milestone, reset for next semester
   if (gameState.cardCount >= 3) {
     gameState.cardCount = 0;
+  }
+
+  // Every run opens on the same first day.
+  if (gameState.totalCards === 0 && !gameState.memory.includes('orientation')) {
+    const opener = PHASE1_CARDS.find(c => c.id === 'orientation');
+    if (opener) return opener;
   }
 
   if (cardPool.length === 0) cardPool = UNIVERSAL_CARDS.filter(c => !gameState.memory.includes(c.id));
@@ -125,20 +155,22 @@ function drawCard() {
   return cardPool[Math.floor(Math.random() * cardPool.length)];
 }
 
+function snapStats() { return {...gameState.st, network: gameState.network}; }
 function beginConsequence(choice) {
-  gameState.lastConsequence = { choice, before: {...gameState.st}, after: {...gameState.st}, steps: [] };
+  gameState.lastConsequence = { choice, before: snapStats(), after: snapStats(), steps: [] };
 }
 
 function recordConsequenceStep(label) {
   const result = gameState.lastConsequence;
   if (!result) return;
   const deltas = {};
+  const now = snapStats();
   Object.keys(result.before).forEach(stat => {
-    const delta = gameState.st[stat] - result.after[stat];
+    const delta = now[stat] - result.after[stat];
     if (delta !== 0) deltas[stat] = delta;
   });
   if (Object.keys(deltas).length) result.steps.push({ label, deltas });
-  result.after = {...gameState.st};
+  result.after = now;
 }
 
 function choose(side) {
@@ -164,37 +196,6 @@ function choose(side) {
     return render();
   }
 
-  // Quals failure check
-  if (card.id === 'ms_quals' && gameState.st.research < (gameState.archetype === 'biologist' ? perk.qualsResearch : 25)) {
-    gameState.qualsAttempts++;
-    if (gameState.qualsAttempts >= 3) {
-      gameState.phase = 'ending';
-      gameState.ending = 'mastered_out';
-      gameState.cause = 'Failed Quals (3 attempts)';
-      return render();
-    }
-    // Retry next semester — push quals back
-    gameState.st.mind = Math.max(0, gameState.st.mind - 15);
-    recordConsequenceStep('Failed the exam');
-    gameState.memory.push('quals_retry_' + gameState.qualsAttempts);
-    gameState.cardCount++;
-    gameState.totalCards++;
-    gameState.semester++;
-    // Re-queue quals for next semester
-    gameState.nextMilestone = MILESTONE_CARDS.find(c => c.id === 'ms_quals');
-    gameState.currentCard = drawCard();
-    render();
-    return;
-  }
-
-  // Defense research gate
-  if (card.id === 'ms_defense' && gameState.st.research < 30) {
-    gameState.phase = 'ending';
-    gameState.ending = 'mastered_out';
-    gameState.cause = 'Insufficient Research';
-    return render();
-  }
-
   if (!effects) {
     gameState.cardCount++;
     gameState.totalCards++;
@@ -217,6 +218,37 @@ function choose(side) {
     gameState.st[stat] = Math.max(0, Math.min(100, gameState.st[stat] + finalDelta));
   });
   recordConsequenceStep('Your choice');
+
+  // CHECKPOINTS: Research is checked after the answer.
+  const need = gateNeed(card.id);
+  if (need !== undefined) {
+    const passed = gameState.st.research >= need;
+    gameState.lastConsequence.verdict = { id: card.id, passed, need };
+    if (card.id === 'ms_defense' && !passed) {
+      gameState.phase = 'ending'; gameState.ending = 'mastered_out'; gameState.cause = 'Insufficient Research';
+      return render();
+    }
+    if (card.id === 'ms_quals' && !passed) {
+      gameState.qualsAttempts++;
+      gameState.memory.push('quals_retry_' + gameState.qualsAttempts);
+      if (gameState.qualsAttempts >= 3) {
+        gameState.phase = 'ending'; gameState.ending = 'mastered_out'; gameState.cause = 'Failed Quals (3 attempts)';
+        return render();
+      }
+      gameState.st.mind = Math.max(0, gameState.st.mind - QUALS_PENALTY);
+      recordConsequenceStep('Failed the exam');
+      gameState.totalCards++;
+      if (gameState.st.mind <= 0) { gameState.phase='ending'; gameState.ending='burnt_out'; gameState.cause='Mind'; return render(); }
+      // Retake next semester, after that semester's cards.
+      gameState.nextSemester = gameState.semester + 1;
+      gameState.phase = 'semester_advance';
+      return render();
+    }
+    if (COMMITTEE_PENALTY[card.id] && !passed) {
+      gameState.st.mind = Math.max(0, gameState.st.mind - COMMITTEE_PENALTY[card.id]);
+      recordConsequenceStep(`Committee wanted Research ${need}`);
+    }
+  }
 
   // POST-CHOICE ARCHETYPE EFFECTS
   if (gameState.archetype === 'overachiever' && gameState.totalCards % perk.everyCards === 0) {
@@ -419,17 +451,23 @@ function applyPIPerk(piType, stat, delta, card) {
 function predictEffects(side) {
   const card = gameState.currentCard;
   if (!card) return {};
-  if (card.id === 'ms_quals' && gameState.st.research < qualsNeed()) return { mind: -15 };
   const effects = side === 'left' ? card.eL : card.eR;
   if (!effects) return {};
-  const out = {};
+  const after = {...gameState.st};
   Object.entries(effects).forEach(([stat, delta]) => {
     if (!(stat in gameState.st)) return;
     let d = applyPerk(gameState.archetype, stat, delta, card);
     if (gameState.piType) d = applyPIPerk(gameState.piType, stat, d, card);
-    const after = Math.max(0, Math.min(100, gameState.st[stat] + d));
-    if (after !== gameState.st[stat]) out[stat] = after - gameState.st[stat];
+    after[stat] = Math.max(0, Math.min(100, after[stat] + d));
   });
+  // A checkpoint you miss costs Mind on top of the answer.
+  const need = gateNeed(card.id);
+  if (need !== undefined && after.research < need) {
+    const hit = card.id === 'ms_quals' ? (gameState.qualsAttempts < 2 ? QUALS_PENALTY : 0) : (COMMITTEE_PENALTY[card.id] || 0);
+    after.mind = Math.max(0, after.mind - hit);
+  }
+  const out = {};
+  Object.keys(after).forEach(stat => { if (after[stat] !== gameState.st[stat]) out[stat] = after[stat] - gameState.st[stat]; });
   return out;
 }
 
@@ -441,19 +479,17 @@ function dotSize(delta) {
   return 3;
 }
 
-function qualsNeed() {
-  return gameState.archetype === 'biologist' ? ARCHETYPE_DATA.biologist.rules.qualsResearch : 25;
-}
+function qualsNeed() { return gateNeed('ms_quals'); }
 
 // The next research checkpoint, drawn as a mark on the Research bar.
-function nextGate() {
-  const sem = gameState.semester, mem = gameState.memory;
+function nextGate(sem = gameState.semester) {
+  const mem = gameState.memory;
   if (!mem.includes('quals_passed')) {
-    return { id: 'ms_quals', name: 'Qualifying exam', sem: Math.max(4, sem), need: qualsNeed(), miss: 'retake next semester, Mind −15. Fail 3 times and you leave with a master’s' };
+    return { id: 'ms_quals', name: 'Qualifying exam', sem: Math.max(4, sem), need: qualsNeed(), miss: 'retake next semester, Mind −' + QUALS_PENALTY + '. Fail 3 times and you leave with a master’s' };
   }
-  if (sem <= 6 && !mem.includes('committee_1_passed')) return { id: 'ms_committee_1', name: 'Committee meeting', sem: 6, need: 25, miss: 'Mind −10' };
-  if (sem <= 8 && !mem.includes('committee_2_passed')) return { id: 'ms_committee_2', name: 'Committee meeting', sem: 8, need: 35, miss: 'Mind −15' };
-  return { id: 'ms_defense', name: 'Defense', sem: 10, need: 30, miss: 'no PhD, you leave with a master’s' };
+  if (sem <= 6 && !mem.includes('committee_1_passed')) return { id: 'ms_committee_1', name: 'Committee meeting', sem: 6, need: GATE_NEED.ms_committee_1, miss: 'Mind −' + COMMITTEE_PENALTY.ms_committee_1 };
+  if (sem <= 8 && !mem.includes('committee_2_passed')) return { id: 'ms_committee_2', name: 'Committee meeting', sem: 8, need: GATE_NEED.ms_committee_2, miss: 'Mind −' + COMMITTEE_PENALTY.ms_committee_2 };
+  return { id: 'ms_defense', name: 'Defense', sem: 10, need: GATE_NEED.ms_defense, miss: 'no PhD, you leave with a master’s' };
 }
 
 // Save the run's ending once, however many times the ending screen is drawn.
@@ -492,5 +528,30 @@ function takeBack() {
   gameState.recorded = false;
   gameState.lastConsequence = null;
   gameState.phase = 'play';
+  render();
+}
+
+// ── The run in progress survives a reload ─────────────────────────
+function persistRun() {
+  try {
+    if (['play', 'semester_advance', 'rotation_complete', 'pi_selection'].includes(gameState.phase)) {
+      localStorage.setItem(RUN_KEY, JSON.stringify({ v: 1, gameState, undoSnapshot }));
+    } else if (gameState.phase === 'ending') {
+      localStorage.removeItem(RUN_KEY);
+    }
+  } catch (e) {}
+}
+function savedRun() {
+  try {
+    const r = JSON.parse(localStorage.getItem(RUN_KEY));
+    return r && r.v === 1 && r.gameState && ARCHETYPE_DATA[r.gameState.archetype] ? r : null;
+  } catch (e) { return null; }
+}
+function resumeRun() {
+  const r = savedRun();
+  if (!r) return beginGame();
+  Object.keys(gameState).forEach(k => { delete gameState[k]; });
+  Object.assign(gameState, r.gameState);
+  undoSnapshot = r.undoSnapshot || null;
   render();
 }

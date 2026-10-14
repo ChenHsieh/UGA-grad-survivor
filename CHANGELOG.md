@@ -159,6 +159,11 @@ Added 7 new universal cards covering two under-represented tensions in computati
 
 ---
 
+## v0.13 — Research Matters
+2026-10-14 · *co-authored with Claude Opus 5.5*
+
+Research starts low (5 to 20 by character) and the checkpoints rise: exam 20, committees 35 and 50, defense 65. A checkpoint is checked after your answer, and one answer on each exam or committee card adds Research, so a near miss is a decision. A failed exam is retaken the next semester after that semester's cards, instead of three times in a row. Early cards all cost something. Every run opens on the first day. The run in progress survives a reload. Change numbers sit over the right bar and play once. Career contacts show in the result line and on the ending. `?seed=` replays a run. `simulation/bots.mjs` plays the rules with four bots.
+
 ## vNext — Secret Diary Cards *(planned)*
 
 A hidden card layer: personal journal entries that surface based on accumulated run history, offering narrative reflection and small stat effects.

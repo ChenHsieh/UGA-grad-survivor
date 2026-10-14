@@ -366,7 +366,7 @@ const ART_TAG = {
   'Support Staff': 'hands', 'Teaching Labor': 'clock', 'Teaching': 'clock',
   'Preparation': 'clock', 'Temptation': 'branch', 'Callback': 'loop',
   'Marketing': 'spark', 'Rare Win': 'spark', 'Small Win': 'spark', 'Validation': 'spark',
-  'Global Student': 'flag', 'Day One': 'flask', 'First Day': 'flask', 'Rotation': 'flask',
+  'Global Student': 'flag', 'Day One': 'cohort', 'First Day': 'queue', 'Computing': 'queue', 'Committee': 'hierarchy', 'Rotation': 'flask',
   'Biologist': 'flask', 'Overachiever': 'stack', 'Vibe-Coder': 'queue',
   'Fun Haver': 'confetti', 'Neurodivergent': 'puzzle', 'Double Agent': 'mask',
   'Gym Bro': 'barbell',
@@ -385,6 +385,7 @@ const ART_CARD = {
   power_outage: 'weather', pandemic_echo: 'weather', car_accident: 'weather',
   family_emergency: 'door', industry_vs_academia: 'branch', job_market: 'branch',
   good_coffee: 'spark', email_from_stranger: 'spark', pipeline_runs: 'spark',
+  car_trouble: 'coins', pulled_over: 'coins', parking_pass: 'coins', retaliation: 'threshold',
 };
 
 function artMotifFor(card) { return ART_CARD[card.id] || ART_TAG[card.tag] || 'mark'; }

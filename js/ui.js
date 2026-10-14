@@ -8,7 +8,9 @@ const STAT_DEFS = [
   { key: 'wallet', name: 'Wallet' },
   { key: 'bonds', name: 'Friends' },
 ];
-const STAT_NAMES = { mind: 'Mind', body: 'Body', wallet: 'Wallet', bonds: 'Friends', research: 'Research' };
+const STAT_NAMES = { mind: 'Mind', body: 'Body', wallet: 'Wallet', bonds: 'Friends', research: 'Research', network: 'Contacts' };
+// Plain words for a few card categories.
+const TAG_LABELS = { 'Cruel': 'Unfair', 'Black Swan': 'Out of Nowhere', 'Privilege': 'Uneven Ground', 'MILESTONE': 'Checkpoint', 'Milestone': 'The Program' };
 const DANGER = 20;   // at or below: red, and Wallet/Friends start draining Mind and Body
 const WARN = 35;
 
@@ -53,12 +55,16 @@ function beginGame() {
 
 function renderTitle() {
   const returning = save.totalRuns > 0;
+  const run = savedRun();
+  const runLine = run ? `Semester ${run.gameState.semester} · ${ARCHETYPE_DATA[run.gameState.archetype].name}` : '';
   return `
     <div class="title-screen">
       <div class="title-art">${endingIcon('defended')}</div>
       <h1>UGA Grad <em>Survivor</em></h1>
       <p class="tagline">Ten semesters. Every card has two answers.<br>Keep four bars above zero, and do enough research to defend.</p>
-      <button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}</button>
+      ${run ? `<button class="begin-btn" onclick="resumeRun()">Continue<span class="btn-sub">${runLine}</span></button>
+      <button class="new-run-btn" onclick="beginGame()">New run</button>`
+        : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}</button>`}
       ${returning ? `<div class="title-meta">${save.endings.length} of 6 endings found · ${save.totalRuns} ${save.totalRuns === 1 ? 'run' : 'runs'}</div>` : ''}
       <div class="credits">by Chen Hsieh, a UGA bioinformatics PhD student</div>
     </div>`;
@@ -136,7 +142,7 @@ function statRow(st) {
 }
 
 function gateLine() {
-  const g = nextGate();
+  const g = nextGate(gameState.phase === 'semester_advance' ? gameState.nextSemester : gameState.semester);
   const r = gameState.st.research;
   const short = r < g.need;
   return `<div class="gate-line ${short ? 'short' : ''}">${statIcon('research')} Research <strong>${r}</strong>. ${g.name} in semester ${g.sem} needs ${g.need}.</div>`;
@@ -146,14 +152,23 @@ function lastLine() {
   const result = gameState.lastConsequence;
   if (!result) return '';
   const steps = result.steps.map(step => `<div class="why-step"><span class="why-label">${escapeText(step.label)}</span> ${formatDeltas(step.deltas)}</div>`).join('');
-  return `<div class="why-box"><div class="why-choice">${escapeText(result.choice)}</div>${steps || '<div class="why-step">No change.</div>'}</div>`;
+  const v = verdictText(result);
+  return `<div class="why-box"><div class="why-choice">${escapeText(result.choice)}</div>${v ? `<div class="why-verdict ${result.verdict.passed ? 'ok' : 'bad'}">${v}</div>` : ''}${steps || '<div class="why-step">No change.</div>'}</div>`;
+}
+
+function verdictText(result) {
+  const v = result && result.verdict;
+  if (!v) return '';
+  if (v.id === 'ms_quals') return v.passed ? 'Qualifying exam passed.' : 'Qualifying exam failed. Retake next semester.';
+  if (v.id === 'ms_defense') return v.passed ? 'Defended.' : 'Not enough Research to defend.';
+  return v.passed ? 'Committee satisfied.' : 'Committee unhappy.';
 }
 
 function renderRotationComplete() {
   return `<div class="semester-advance-screen">
     <div class="sem-advance-badge">Semester 1 done · rotations over</div>
     <div class="sem-advance-title">Choose your lab</div>
-    <div class="sem-advance-flavor">You have seen the famous PI with no time for students. The warm one with no publications. The new one still figuring it out. Now you commit to one of them.</div>
+    <div class="sem-advance-flavor">Rotations are over. Now you pick the lab you will stay in, and the professor who runs it becomes your advisor until you graduate.</div>
     ${statRow(gameState.st)}
     ${gateLine()}
     <button class="sem-advance-btn" onclick="continueToPI()">Pick your advisor</button>
@@ -166,8 +181,8 @@ function renderSemesterAdvance() {
   const flavors = {
     3: "First year is behind you. The qualifying exam is out there, somewhere in the fog.",
     4: "The grind is real. Your brain hurts in a productive way. The exam is this semester.",
-    5: "Past the exam. The project is yours now. Nobody tells you what to do next.",
-    6: "Committee season. Everyone wants a progress report. You have a PowerPoint.",
+    5: gameState.memory.includes('quals_passed') ? "Past the exam. The project is yours now. Nobody tells you what to do next." : "The exam is still ahead of you. The retake is this semester.",
+    6: gameState.memory.includes('quals_passed') ? "Committee season. Everyone wants a progress report. You have a PowerPoint." : "Last chance at the exam. A third miss ends the PhD with a master’s.",
     7: "You've been here long enough to have strong opinions about the grad lounge coffee.",
     8: "The end is theoretically visible. You've written more than you ever thought possible.",
     9: "One more push. Defense is almost within reach.",
@@ -181,7 +196,7 @@ function renderSemesterAdvance() {
     ${lastLine()}
     ${statRow(gameState.st)}
     ${gateLine()}
-    <div class="sem-advance-cost">Rent goes up: Wallet −1 when you start the semester.</div>
+    <div class="sem-advance-cost">${next >= 6 ? 'Starting the semester costs Wallet −1 (rent goes up) and Friends −1 (late PhD years are lonely).' : 'Starting the semester costs Wallet −1: rent goes up.'}</div>
     <button class="sem-advance-btn" onclick="continueSemester()">Start semester ${next}</button>
   </div>`;
 }
@@ -191,13 +206,17 @@ function renderSemesterAdvance() {
 function dangerMessage() {
   const st = gameState.st;
   const g = nextGate();
-  const lowest = STAT_DEFS.map(s => ({ ...s, v: st[s.key] })).sort((a, b) => a.v - b.v)[0];
-  if (lowest.v <= 10) return `${lowest.name} is at ${lowest.v}. At 0 the run ends.`;
-  if (st.wallet < 20) return 'Wallet under 20: you lose Mind and Body every card.';
-  if (st.bonds < 20) return 'Friends under 20: you lose Mind and Body every card.';
-  if (g.sem === gameState.semester && st.research < g.need) return `${g.name} this semester needs Research ${g.need}. You have ${st.research}.`;
-  if (st.research < 15 && gameState.semester >= 3) return 'Research under 15: your advisor’s worry costs Mind every card.';
-  if (lowest.v <= DANGER) return `${lowest.name} is low. Watch for big dots on it.`;
+  const bars = STAT_DEFS.map(s => ({ ...s, v: st[s.key] })).sort((a, b) => a.v - b.v);
+  const list = arr => arr.length === 1 ? arr[0] : arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1];
+  const critical = bars.filter(b => b.v <= 10);
+  if (critical.length) return `${list(critical.map(b => `${b.name} ${b.v}`))}. At 0 the run ends.`;
+  if (st.wallet < 20) return 'Wallet under 20 costs Mind and Body every card.';
+  if (st.bonds < 20) return 'Friends under 20 costs Mind and Body every card.';
+  const onGateCard = gameState.currentCard && gameState.currentCard.id === g.id;
+  if (!onGateCard && g.sem === gameState.semester && st.research < g.need) return `${g.name} this semester: Research ${g.need} needed, you have ${st.research}.`;
+  if (st.research < 15 && gameState.semester >= 3) return 'Research under 15: your advisor’s worry costs Mind.';
+  const low = bars.filter(b => b.v <= DANGER);
+  if (low.length) return `${list(low.map(b => b.name))} ${low.length > 1 ? 'are' : 'is'} low. Watch for big dots.`;
   return '';
 }
 
@@ -216,51 +235,56 @@ function renderPlay() {
     const float = fresh && total[s.key] ? `<span class="float ${total[s.key] > 0 ? 'up' : 'down'}">${signed(total[s.key])}</span>` : '';
     return `<div class="stat-item ${zoneOf(v)}" data-stat="${s.key}">
       <span class="dot" aria-hidden="true"></span>
-      <div class="stat-top">${statIcon(s.key)}<span class="stat-name">${s.name}</span><span class="stat-value">${v}</span></div>
-      <div class="stat-bar"><div class="stat-fill" data-to="${v}" style="width:${shownFrom[s.key]}%"></div></div>
+      <div class="stat-top">${statIcon(s.key)}<span class="stat-name">${s.name}</span></div>
+      <div class="stat-row"><div class="stat-bar"><div class="stat-fill" data-to="${v}" style="width:${shownFrom[s.key]}%"></div></div><span class="stat-value">${v}</span></div>
       ${float}
     </div>`;
   };
 
   const g = nextGate();
   const r = st.research;
-  const rFloat = fresh && total.research ? `<span class="float ${total.research > 0 ? 'up' : 'down'}">${signed(total.research)}</span>` : '';
+  const rFloat = fresh && total.research ? `<span class="float r-float ${total.research > 0 ? 'up' : 'down'}">${signed(total.research)}</span>` : '';
   const gateNow = g.sem === gameState.semester;
   const research = `<div class="research ${r < g.need ? (gateNow ? 'short now' : 'short') : 'met'}" data-stat="research">
     <span class="dot" aria-hidden="true"></span>
-    <div class="research-top">${statIcon('research')}<span class="stat-name">Research</span><span class="stat-value">${r}</span>
+    <div class="research-top">${statIcon('research')}<span class="stat-name">Research</span><span class="stat-value">${r}</span>${rFloat}
       <span class="gate-label">${g.name}, sem ${g.sem}: needs ${g.need}</span></div>
     <div class="research-bar"><div class="stat-fill" data-to="${r}" style="width:${shownFrom.research}%"></div>
       <div class="gate-mark" style="left:${g.need}%"></div></div>
-    ${rFloat}
   </div>`;
 
+  const finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   let line1;
-  if (!result && gameState.totalCards === 0) line1 = '<span class="teach">Drag the card, or tap an answer.</span>';
-  else if (result) line1 = `<span class="last">Last:</span> ${formatDeltas(total) || 'no change'}`;
+  const verdict = verdictText(result);
+  if (!result && gameState.totalCards === 0) line1 = `<span class="teach">${finePointer ? 'Drag the card, or click an answer.' : 'Drag the card, or tap an answer twice.'}</span>`;
+  else if (result) line1 = `${verdict ? `<span class="verdict ${result.verdict.passed ? 'ok' : 'bad'}">${verdict}</span>` : '<span class="last">Last:</span>'} ${formatDeltas(total) || 'no change'}`;
   else line1 = '';
-  const line2 = dangerMessage();
+  let line2 = dangerMessage();
+  const a = ARCHETYPE_DATA[gameState.archetype];
+  const intro = !line2 && gameState.totalCards === 0 ? `You are ${a.name}: ${a.blurb.split('. ')[0].replace(/\.$/, '').replace(/^./, c => c.toLowerCase())}.` : '';
 
   let milestoneBox = '';
-  const thresholds = { ms_quals: qualsNeed(), ms_committee_1: 25, ms_committee_2: 35, ms_defense: 30 };
-  if (card.milestone && thresholds[card.id] !== undefined) {
-    const need = thresholds[card.id];
-    const ok = r >= need;
-    const outcome = card.id === 'ms_quals' ? (ok ? 'You will pass. The answer decides how it feels.' : 'You will not pass this time. Retake next semester.')
-      : card.id === 'ms_defense' ? (ok ? 'Enough to defend.' : 'Not enough. The committee will say no.')
-      : (ok ? 'They are satisfied.' : 'They were not impressed. Mind already took the hit.');
-    milestoneBox += `<div class="research-reveal ${ok ? 'ok' : 'warn'}">Research ${r} of ${need} needed. ${outcome}</div>`;
+  const need = gateNeed(card.id);
+  if (card.milestone && need !== undefined) {
+    const reach = Math.max(predictEffects('left').research || 0, predictEffects('right').research || 0);
+    const miss = card.id === 'ms_quals' ? (gameState.qualsAttempts >= 2 ? 'third miss ends the PhD with a master’s' : `retake next semester, Mind −${QUALS_PENALTY}`)
+      : card.id === 'ms_defense' ? 'no PhD, you leave with a master’s' : `Mind −${COMMITTEE_PENALTY[card.id]}`;
+    const state = r >= need ? 'ok' : r + reach >= need ? 'close' : 'warn';
+    const tail = state === 'ok' ? 'Checked after you answer.'
+      : state === 'close' ? `Short by ${need - r}. One answer adds Research before the check.`
+      : `Short by ${need - r}. Below the line: ${miss}.`;
+    milestoneBox += `<div class="research-reveal ${state}">Needs Research ${need}. You have ${r}. ${tail}</div>`;
   }
   const networkFlavor = {
     ms_committee_1: [
       { min: 45, text: 'One committee member mentioned a contact at a biotech firm in passing. You filed it away.' },
       { min: 20, text: 'Your committee is academically sharp. Outside of academia, the network is thinner.' },
-      { min: 0,  text: 'You realize you don\'t know anyone outside this department. The committee doesn\'t either.' }
+      { min: 0,  text: 'Career contacts: almost none. You don\'t know anyone outside this department. The committee doesn\'t either.' }
     ],
     ms_defense_sched: [
       { min: 50, text: 'People at conferences know your name. The job search has already started informally.' },
       { min: 25, text: 'You have some contacts. The market will tell you if it\'s enough.' },
-      { min: 0,  text: 'The network you haven\'t built is starting to feel like the kind of thing that matters.' }
+      { min: 0,  text: 'Career contacts: almost none. That is starting to feel like the kind of thing that matters.' }
     ]
   };
   if (card.milestone && networkFlavor[card.id]) {
@@ -282,12 +306,12 @@ function renderPlay() {
     </div>
     <div class="news" aria-live="polite">
       <div class="news-1" id="news1" data-base="${escapeText(line1)}">${line1}</div>
-      <div class="news-2 ${line2 ? 'alert' : ''}">${line2}</div>
+      <div class="news-2 ${line2 ? 'alert' : ''}">${line2 || intro}</div>
     </div>
     <div class="card-container">
       <div class="card-ghost"></div>
       <div class="card" id="card">
-        <div class="card-tag">${escapeText(card.tag)}</div>
+        <div class="card-tag">${escapeText(TAG_LABELS[card.tag] || card.tag)}</div>
         <div class="card-title">${card.title}</div>
         ${milestoneBox}
         <div class="card-body" id="cardBody">${card.body}</div>
@@ -311,7 +335,7 @@ function renderEnding() {
     ? 'Multiple paths are open. Industry reached out before you even updated your LinkedIn. The degree and the network landed at the same time.'
     : gameState.network > 25
     ? 'You have a few leads: people who remember your name from conferences, a cold email that got a warm reply. It\'s enough to start.'
-    : 'The degree is real. The network isn\'t there yet. You\'ll spend the next few months explaining your work to people who weren\'t in the room.';
+    : 'The degree is real. Your career contacts are thin. You\'ll spend the next few months explaining your work to people who weren\'t in the room.';
   const archName = ARCHETYPE_DATA[gameState.archetype]?.name || 'Unknown';
   const piName = gameState.piType ? PI_DATA[gameState.piType]?.name : null;
   const runInfo = piName ? `${archName} · ${piName}` : archName;
@@ -367,7 +391,7 @@ function renderEnding() {
   if (!d) return '<div>Error loading ending.</div>';
 
   const networkHint = (['mastered_out', 'broke'].includes(ending) && gameState.network <= 30)
-    ? `<div class="network-hint">Your network was thin this run. Conferences, collaborations and saying yes to people unlock a different version of this ending.</div>`
+    ? `<div class="network-hint">Your career contacts were thin this run. Conferences, collaborations and saying yes to people unlock a different version of this ending.</div>`
     : '';
 
   const why = ending !== 'defended' && gameState.lastConsequence
@@ -387,6 +411,7 @@ function renderEnding() {
     ${networkHint}
     <div class="ending-stats">
       ${['mind', 'body', 'wallet', 'bonds', 'research'].map(k => `<div class="stat-line"><span>${statIcon(k)} ${STAT_NAMES[k]}</span><span>${gameState.st[k]}</span></div>`).join('')}
+      <div class="stat-line"><span>${statIcon('network')} Career contacts</span><span>${gameState.network}</span></div>
       <div class="stat-line sep"><span>Cards played</span><span>${cards}</span></div>
     </div>
     ${renderEndingGrid()}
@@ -414,7 +439,7 @@ function renderEndingGrid() {
       ? `<div class="ending-slot unlocked ${now ? 'now' : ''}"><div class="slot-emoji">${endingIcon(e.id)}</div><div class="slot-name">${e.name}</div></div>`
       : `<div class="ending-slot locked"><div class="slot-lock">?</div><div class="slot-name">Not yet</div></div>`;
   }).join('')}</div>
-  <div class="run-meta">${save.archetypes.length} of 8 characters unlocked</div>`;
+  <div class="run-meta">${save.totalRuns <= 1 ? 'Next run you choose who to play. ' : ''}${save.archetypes.length} of 8 characters open.</div>`;
 }
 
 // ── Render ────────────────────────────────────────────────────────
@@ -438,7 +463,10 @@ function render() {
     }));
     const body = document.getElementById('cardBody');
     if (body) body.classList.toggle('overflows', body.scrollHeight > body.clientHeight + 4);
+    // Change numbers play once, then leave, so they cannot replay later.
+    app.querySelectorAll('.float').forEach(el => el.addEventListener('animationend', () => el.remove()));
   }
+  persistRun();
   if (renderedPhase !== phase) {
     window.scrollTo(0, 0);
     if (phase !== 'title' && phase !== 'play') {
@@ -463,11 +491,16 @@ function showHelp() {
   overlay.innerHTML = `
     <div class="help-content" tabindex="-1">
       <h2 id="helpTitle">How to play</h2>
-      <p>Drag the card left or right to answer. Or tap an answer, then tap it again.</p>
+      <p>Drag the card left or right to answer. Or tap an answer to preview it, then tap it again to choose. With a mouse, one click chooses.</p>
       <p>While you lean toward an answer, dots appear on the bars it will move. A bigger dot means a bigger change. The dots never say up or down. The card does.</p>
       <div class="help-stat">${statIcon('mind')}<span><strong>Mind, Body, Wallet, Friends.</strong> If any of them hits 0, the run ends. Under 20 they turn red. Wallet or Friends under 20 also cost you Mind and Body every card.</span></div>
-      <div class="help-stat">${statIcon('research')}<span><strong>Research</strong> is the long bar. The white mark is the next checkpoint. Reach semester 10 with enough Research to defend.</span></div>
+      <div class="help-stat">${statIcon('research')}<span><strong>Research</strong> is the long bar. The white line on it is what the next exam or committee meeting needs. Each checkpoint asks for more: ${qualsNeed()}, ${GATE_NEED.ms_committee_1}, ${GATE_NEED.ms_committee_2}, then ${GATE_NEED.ms_defense} to defend in semester 10.</span></div>
+      <div class="help-stat">${statIcon('network')}<span><strong>Career contacts</strong> come from conferences and saying yes to people. They never end a run, but they change how your ending reads.</span></div>
       <p>If a choice ends your run, you can take it back once.</p>
+      <details class="how">
+        <summary>Words on the cards</summary>
+        <p><strong>PI</strong>: the professor who runs a lab, your advisor. <strong>Rotation</strong>: a short trial stay in a lab before you pick one. <strong>Committee</strong>: the professors who check your progress. <strong>Cluster</strong> or <strong>HPC</strong>: the shared campus supercomputer. <strong>SSH</strong>: the command that logs you in to it. <strong>Pipeline</strong>: a chain of analysis steps run as code. <strong>RNA-seq</strong>: measuring which genes are switched on. <strong>Postdoc</strong>: a short research job after the PhD. <strong>ABD</strong>: all but dissertation. <strong>Desk-rejected</strong>: turned down by the editor without review. <strong>DOI</strong>: the permanent ID of a paper.</p>
+      </details>
       <details class="how">
         <summary>Why these rules?</summary>
         <p>The cards come from one student's bioinformatics PhD at the University of Georgia. The rules are hand-written, not a model of real data. Each answer moves the bars by a fixed amount, and your character and advisor scale some of those amounts.</p>

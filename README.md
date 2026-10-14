@@ -7,17 +7,22 @@ life, and the long road to a defense.
 [Play](https://chenhsieh.github.io/UGA-grad-survivor/) ·
 [Change history](CHANGELOG.md) · [MIT license](LICENSE)
 
-![UGA Grad Survivor gameplay](media/preview.png)
+<p>
+<img src="media/play-first-card.png" width="300" alt="The first card, Welcome to the Program, with one answer tapped once. Dots sit over Mind and Friends, the two bars that answer moves.">
+<img src="media/play-checkpoint.png" width="300" alt="The qualifying exam in semester 4. Research is 25 against a line at 20, and the card says the check happens after you answer.">
+</p>
 
 Vanilla JavaScript and CSS. No package installation, build step, or game server.
 
 ## How to play
 
-The first run starts straight on a card as the Overachiever; the character
-picker appears from the second run. After rotations you choose an advisor.
-Each card offers two answers. Keep **Mind, Body, Wallet, and Friends above
-zero**, keep Research above the next checkpoint mark, and reach the defense in
-semester 10.
+1. Read the card. Drag it left or right to answer, or tap an answer to preview it and tap again to choose (one click with a mouse, or the arrow keys).
+2. While you lean toward an answer, dots appear over the bars it will move. A bigger dot means a bigger change. The dots never say up or down; the card text does.
+3. Keep **Mind, Body, Wallet and Friends** above zero. A bar at 20 or below turns red. Wallet or Friends under 20 also drain Mind and Body every card.
+4. Build **Research**. The line on the Research bar is what the next checkpoint needs, and each one asks for more: qualifying exam 20 (semester 4), committee 35 (semester 6), committee 50 (semester 8), defense 65 (semester 10). Research is checked after your answer at a checkpoint, so an answer that adds Research can carry you over.
+5. If a choice ends your run, you can take it back once.
+
+The first run starts straight on a card as the Overachiever; from the second run you pick a character. After the first semester of rotations you pick an advisor. A reload keeps your run: the title offers Continue. Add `?seed=anything` to the address to replay the same card draws.
 
 | Input | Action |
 | --- | --- |
@@ -26,19 +31,10 @@ semester 10.
 | Mouse hover, then click | Lean, then choose |
 | Left/Right arrows or A/D | Lean; press again (or Enter) to choose |
 | Tab, or Up/Down arrows / W/S in selection menus | Browse archetypes or advisors |
-| Enter or Space on a focused button | Activate that button |
-| Enter or Space outside a control | Begin or continue at a checkpoint |
-| ? / H during play, or the help button | Open help and theme settings |
+| ? / H during play, or the help button | Help, a short word list, and themes |
 | Escape | Close help |
 
-While you lean toward an answer, a dot appears over every bar it will move,
-sized by how much (small, medium, big), after your character and advisor
-perks. The dots never show direction: the card text is the clue, as in Reigns.
-Bars you will not touch dim. A bar at 20 or below turns red, and a dot that
-could empty it pulses. After a choice the bars animate and float the change.
-Research is a visible bar with the next checkpoint drawn on it, and milestone
-cards say before you answer whether you will pass. If a choice ends the run you
-can take it back once. A separate network value stays hidden.
+Some answers also add career contacts, shown in the result line and on the ending screen. They never end a run but change how the ending reads.
 
 Eight archetypes and six advisor types shape a run, with some unlocked through
 play. Five archetypes and four advisors start available. Six endings are
@@ -73,6 +69,18 @@ for file in js/*.js js/data/*.js; do node --check "$file" || exit; done
 git diff --check
 ```
 
+Balance check: four bots play the real rules from the repository root.
+
+```sh
+node simulation/bots.mjs 1000 overachiever
+```
+
+With the current numbers, a bot that keeps the bars healthy but ignores Research
+defends about 5% of runs (it fails the exam or the defense), a bot that chases
+Research above all defends about 45% (a bar runs out), and a bot that balances
+both defends about 70%. The bots see exact effects, so people seeing only dots do
+worse.
+
 Then smoke the actual browser flow:
 
 - Begin, choose an archetype using Tab and Enter, and make both kinds of choice.
@@ -82,27 +90,27 @@ Then smoke the actual browser flow:
   Escape. The run must stay unchanged while help is open.
 - Check a narrow screen, rotations/advisor selection, a semester checkpoint,
   and an ending. Check keyboard focus after a choice.
-- Reload to confirm unlock persistence and that a fresh title screen appears.
+- Reload mid-run and confirm the title offers Continue at the same card.
 
-The notebooks in [simulation/](simulation/) are separate historical balance
-tools with their own requirements. They are not needed to run the game and do
-not establish current human completion rates.
+The notebooks in [simulation/](simulation/) are older balance tools for an
+earlier version of the rules. None of the bots or notebooks establish human
+completion rates.
 
 ## Saves, sources, and limits
 
 - `uga_grad_survivor_v2` in localStorage stores unlocks and aggregate run
-  records (schema version 3); `uga_theme` stores the selected theme.
-  **The active run is not saved.** Reloading abandons it and returns to the title.
+  records (schema version 3); `uga_grad_survivor_run` stores the run in
+  progress so a reload can continue it; `uga_theme` stores the selected theme.
 - No login, backend, analytics, or remote gameplay API is used. Some themes
   request Google Fonts; system fallbacks work if those requests are blocked.
 - All card content is checked in under `js/data/`. The scenarios and resource
   model are a satirical game, not a prediction of real PhD outcomes.
-- Random card draws mean a new run may differ. There is no seeded replay UI,
-  cross-device save, or automated accessibility certification.
+- Random card draws mean a new run may differ; `?seed=` repeats them. There is
+  no cross-device save or automated accessibility certification.
 - Sharing is initiated by the player and copies ending text; nothing posts
   automatically. Clipboard behavior depends on browser permissions.
 - The interface shows which bars an answer moves and how much, never the
-  direction. The network value stays hidden.
+  direction.
 
 ## Source map
 
@@ -116,7 +124,8 @@ not establish current human completion rates.
 | `js/data/archetypes.js` | Archetype starting stats, shared rules, and descriptions |
 | `js/data/pi-data.js` | Advisor presentation |
 | `js/data/cards-*.js` | Scenario and milestone pools |
-| `simulation/` | Historical balance notebooks |
+| `simulation/bots.mjs` | Bot players against the current rules |
+| `simulation/*.ipynb` | Historical balance notebooks |
 
 When adding a card, use a unique ID and the existing `cL` / `cR` choices and
 `eL` / `eR` effects. Preserve the perk application order and save contract;
