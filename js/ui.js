@@ -1,4 +1,6 @@
 let helpVisible = false;
+let helpOpener = null;
+let renderedPhase = null;
 
 function renderTitle() {
   return `
@@ -22,27 +24,26 @@ const ARCH_UNLOCK_HINTS = {
 function renderArchetype() {
   const archs = Object.entries(ARCHETYPE_DATA);
   const selectable = getSelectableArchetypes();
-  let selectIdx = 0;
-  let html = `<div class="archetype-screen"><div class="screen-title">Choose Your Path</div><div class="screen-sub">↑↓ or W/S to browse · Space to select</div>`;
+  let html = `<div class="archetype-screen"><h1 class="screen-title">Choose Your Path</h1><div class="screen-sub">Tap a card · Tab or ↑↓ to browse · Enter to select</div>`;
   archs.forEach(([key, data]) => {
     const locked = !save.archetypes.includes(key);
     const isFirst = !locked && key === selectable[0];
     const s = data.st;
     html += `
-      <div class="arch-card ${locked ? 'locked' : ''} ${isFirst ? 'selected' : ''}" ${!locked ? `onclick="selectArchetype('${key}')"` : ''}>
-        <div class="arch-emoji">${data.emoji}</div>
-        <div class="arch-name">${data.name}</div>
-        <div class="arch-perk">${data.perk}</div>
-        <div class="arch-desc">${data.desc}</div>
-        <div class="arch-stats">
+      <button type="button" class="arch-card ${locked ? 'locked' : ''} ${isFirst ? 'selected' : ''}" ${locked ? 'disabled' : `onclick="selectArchetype('${key}')"`}>
+        <span class="arch-emoji">${data.emoji}</span>
+        <span class="arch-name">${data.name}</span>
+        <span class="arch-perk">${data.perk}</span>
+        <span class="arch-desc">${data.desc}</span>
+        <span class="arch-stats">
           <span>🧠 ${s.mind}</span>
           <span>💪 ${s.body}</span>
           <span>💰 ${s.wallet}</span>
           <span>🤝 ${s.bonds}</span>
           <span>📊 ${s.research}</span>
-        </div>
-        ${locked ? `<div class="arch-locked-msg">🔒 ${ARCH_UNLOCK_HINTS[key] || 'Unlock by playing'}</div>` : ''}
-      </div>
+        </span>
+        ${locked ? `<span class="arch-locked-msg">🔒 ${ARCH_UNLOCK_HINTS[key] || 'Unlock by playing'}</span>` : ''}
+      </button>
     `;
   });
   html += `</div>`;
@@ -63,6 +64,7 @@ function renderRotationComplete() {
       <span>💰 ${st.wallet}</span>
       <span>🤝 ${st.bonds}</span>
     </div>
+    ${renderConsequence()}
     <button class="sem-advance-btn" onclick="continueToPI()">Choose Your Advisor →</button>
     <div style="font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
   </div>`;
@@ -72,17 +74,17 @@ function renderPISelection() {
   const pis = Object.entries(PI_DATA);
   const unlocked = save.unlockedPIs || ['micromanager', 'ghost', 'mentor', 'new_pi'];
   let html = `<div class="archetype-screen">
-    <div class="screen-title">Choose Your Advisor</div>
-    <div class="screen-sub">↑↓ or W/S to browse · Space to select</div>`;
+    <h1 class="screen-title">Choose Your Advisor</h1>
+    <div class="screen-sub">Tap a card · Tab or ↑↓ to browse · Enter to select</div>`;
   pis.forEach(([key, data]) => {
     const locked = !unlocked.includes(key);
     html += `
-      <div class="arch-card ${locked ? 'locked' : ''}" ${!locked ? `onclick="selectPI('${key}')"` : ''}>
-        <div class="arch-emoji">${data.emoji}</div>
-        <div class="arch-name">${data.name}</div>
-        <div class="arch-desc">${data.desc}</div>
-        ${locked ? `<div class="arch-locked-msg">🔒 ${key === 'exploiter' ? 'Get the Mastered Out ending' : key === 'dynasty' ? 'Get the Defended ending' : 'Unlock by playing'}</div>` : ''}
-      </div>
+      <button type="button" class="arch-card ${locked ? 'locked' : ''}" ${locked ? 'disabled' : `onclick="selectPI('${key}')"`}>
+        <span class="arch-emoji">${data.emoji}</span>
+        <span class="arch-name">${data.name}</span>
+        <span class="arch-desc">${data.desc}</span>
+        ${locked ? `<span class="arch-locked-msg">🔒 ${key === 'exploiter' ? 'Get the Mastered Out ending' : key === 'dynasty' ? 'Get the Defended ending' : 'Unlock by playing'}</span>` : ''}
+      </button>
     `;
   });
   html += `</div>`;
@@ -121,6 +123,7 @@ function renderSemesterAdvance() {
       <span>🤝 ${st.bonds}</span>
     </div>
     <div class="sem-advance-cost">Cost of living: Wallet −1</div>
+    ${renderConsequence()}
     <button class="sem-advance-btn" onclick="continueSemester()">Enter Semester ${next} →</button>
     <div style="font-size:9px;color:var(--muted);margin-top:12px;letter-spacing:1px">PRESS SPACE TO CONTINUE</div>
   </div>`;
@@ -136,6 +139,26 @@ function fxHints(fx) {
     const cls = v > 0 ? 'up' : 'down';
     return `<span class="fx-hint ${cls}">${icons[k]}${arrow}</span>`;
   }).join('') + '</div>';
+}
+
+function renderConsequence() {
+  const result = gameState.lastConsequence;
+  if (!result) return '';
+  const labels = { mind: 'Mind', body: 'Body', wallet: 'Wallet', bonds: 'Bonds', research: 'Research' };
+  const formatDeltas = deltas => Object.entries(labels)
+    .filter(([stat]) => deltas[stat])
+    .map(([stat, label]) => `${label} ${deltas[stat] > 0 ? '+' : '−'}${Math.abs(deltas[stat])}`)
+    .join(' · ');
+  const total = {};
+  Object.keys(labels).forEach(stat => { total[stat] = result.after[stat] - result.before[stat]; });
+  const escapeText = text => String(text).replace(/[&<>"']/g, char =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+  return `<details class="consequence">
+    <summary><span class="consequence-title">Last result</span> ${formatDeltas(total) || 'No net stat change'}</summary>
+    <div class="consequence-choice">${escapeText(result.choice)}</div>
+    ${result.steps.map(step => `<div class="consequence-step"><strong>${escapeText(step.label)}:</strong> ${formatDeltas(step.deltas)}</div>`).join('')}
+    ${result.steps.length ? '' : '<div class="consequence-step">No stat changes.</div>'}
+  </details>`;
 }
 
 function renderPlay() {
@@ -165,7 +188,9 @@ function renderPlay() {
     return `<div class="stat-item"><div class="stat-top"><span class="stat-emoji">${s.emoji}</span><span class="stat-name">${s.name}</span><span class="stat-value">${v}</span></div><div class="stat-bar ${zone}"><div class="stat-fill" style="width:${v}%"></div></div></div>`;
   }).join('')}</div>`;
 
-  const researchThresholds = {ms_quals: gameState.archetype === 'biologist' ? 30 : 25, ms_committee_1: 25, ms_committee_2: 35, ms_defense: 30};
+  html += renderConsequence();
+
+  const researchThresholds = {ms_quals: gameState.archetype === 'biologist' ? ARCHETYPE_DATA.biologist.rules.qualsResearch : 25, ms_committee_1: 25, ms_committee_2: 35, ms_defense: 30};
   if (card.milestone && researchThresholds[card.id] !== undefined) {
     const threshold = researchThresholds[card.id];
     const val = gameState.st.research;
@@ -207,7 +232,7 @@ function renderPlay() {
     </div>
   </div>
   <div class="controls-hint">SWIPE · CLICK · ← A/D →</div>
-  <button class="help-btn" onclick="showHelp()" title="How to play">?</button>`;
+  <button class="help-btn" onclick="showHelp()" aria-label="How to play" title="How to play">?</button>`;
 
   return html;
 }
@@ -284,6 +309,7 @@ function renderEnding() {
     <div class="ending-sub">${d.subtitle}</div>
     <div class="ending-body">${d.body}</div>
     ${networkHint}
+    ${renderConsequence()}
     <div class="ending-stats">
       <div class="stat-line"><span>🧠 Mind</span><span>${gameState.st.mind}</span></div>
       <div class="stat-line"><span>💪 Body</span><span>${gameState.st.body}</span></div>
@@ -350,6 +376,8 @@ function renderEndingGrid() {
 
 function render() {
   const app = document.getElementById('app');
+  const choiceFocus = document.activeElement?.closest?.('.card-btn');
+  const choiceSide = choiceFocus?.classList.contains('left') ? '.left' : '.right';
   if (gameState.phase === 'title') app.innerHTML = renderTitle();
   else if (gameState.phase === 'archetype') app.innerHTML = renderArchetype();
   else if (gameState.phase === 'pi_selection') app.innerHTML = renderPISelection();
@@ -357,24 +385,35 @@ function render() {
   else if (gameState.phase === 'semester_advance') app.innerHTML = renderSemesterAdvance();
   else if (gameState.phase === 'play') app.innerHTML = renderPlay();
   else if (gameState.phase === 'ending') app.innerHTML = renderEnding();
+  if (choiceFocus && gameState.phase === 'play') {
+    app.querySelector('.card-btn' + choiceSide)?.focus({ preventScroll: true });
+  } else if (renderedPhase !== gameState.phase && gameState.phase !== 'title') {
+    app.querySelector('.arch-card:not(.locked), .sem-advance-btn, .card-btn, .play-again-btn')?.focus({ preventScroll: true });
+  }
+  renderedPhase = gameState.phase;
 }
 
 function showHelp() {
+  if (helpVisible) return;
+  helpOpener = document.activeElement;
   helpVisible = true;
-  const overlay = document.createElement('div');
+  const overlay = document.createElement('dialog');
   overlay.className = 'help-overlay';
   overlay.id = 'helpOverlay';
+  overlay.setAttribute('aria-labelledby', 'helpTitle');
+  overlay.oncancel = function(ev) { ev.preventDefault(); closeHelp(); };
   overlay.onclick = function(ev) { if (ev.target === overlay) closeHelp(); };
   overlay.innerHTML = `
-    <div class="help-content">
-      <h2>How to Play</h2>
-      <p>You're a PhD student. Every card is a situation — choose left or right. Each choice affects your stats. If any stat hits zero, your PhD is over.</p>
+    <div class="help-content" tabindex="-1">
+      <h2 id="helpTitle">How to Play</h2>
+      <p>You're a PhD student. Every card is a situation — choose left or right. Each choice affects your stats. If Mind, Body, Wallet, or Bonds hits zero, your PhD is over.</p>
       <p><strong>Survive 10 semesters</strong>, pass your milestones, and keep your research up to defend.</p>
       <div class="help-stat"><span class="emoji">🧠</span><span><strong>Mind</strong> — Sanity, focus, will to continue. Hits zero → burnt out.</span></div>
       <div class="help-stat"><span class="emoji">💪</span><span><strong>Body</strong> — Physical health, sleep, energy. Hits zero → hospitalized.</span></div>
       <div class="help-stat"><span class="emoji">💰</span><span><strong>Wallet</strong> — Money and funding. Low wallet drains Mind and Body.</span></div>
       <div class="help-stat"><span class="emoji">🤝</span><span><strong>Bonds</strong> — Relationships. Low bonds drains Mind and Body. Hits zero → disappeared.</span></div>
-      <div class="help-stat"><span class="emoji">📊</span><span><strong>Research</strong> — Hidden during play. Revealed at quals, committee meetings, and defense. Too low at those checkpoints = trouble.</span></div>
+      <div class="help-stat"><span class="emoji">📊</span><span><strong>Research</strong> — Total hidden during play. Revealed at quals, committee meetings, and defense. Too low at those checkpoints = trouble.</span></div>
+      <p>Open <strong>Last result</strong> to see actual changes from your completed choice, including perks and passive drains. Research changes are shown; its total stays hidden until checkpoints.</p>
       <p style="margin-top:12px"><strong>Controls:</strong></p>
       <p>← A or Arrow Left = left choice<br>→ D or Arrow Right = right choice<br>Swipe left/right on mobile<br>Click the buttons, or use ↑↓/WS to navigate menus</p>
       <p style="margin-top:12px"><strong>Tip:</strong> Dying unlocks new archetypes and endings. You're meant to play more than once.</p>
@@ -384,13 +423,15 @@ function showHelp() {
           ${['cold','terminal','zine','pixel','classic','red'].map(t => {
             const labels = {cold:'Institutional',terminal:'Terminal',zine:'Zine',pixel:'Pixel',classic:'Classic',red:'Crimson'};
             const active = document.documentElement.getAttribute('data-theme') === t ? ' active' : '';
-            return `<button class="theme-btn${active}" data-theme="${t}" onclick="setTheme('${t}')">${labels[t]}</button>`;
+            return `<button class="theme-btn${active}" aria-pressed="${!!active}" data-theme="${t}" onclick="setTheme('${t}')">${labels[t]}</button>`;
           }).join('')}
         </div>
       </div>
       <button class="help-close" onclick="closeHelp()">GOT IT</button>
     </div>`;
   document.body.appendChild(overlay);
+  overlay.showModal();
+  overlay.querySelector('.help-content').focus();
 }
 
 function copyShare() {
@@ -411,11 +452,15 @@ function copyShare() {
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem('uga_theme', t);
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === t);
+    b.setAttribute('aria-pressed', String(b.dataset.theme === t));
+  });
 }
 
 function closeHelp() {
   helpVisible = false;
   const el = document.getElementById('helpOverlay');
-  if (el) el.remove();
+  if (el) { el.close(); el.remove(); }
+  if (helpOpener?.isConnected) helpOpener.focus({ preventScroll: true });
 }

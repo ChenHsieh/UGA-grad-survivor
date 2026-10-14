@@ -1,120 +1,119 @@
-# UGA Grad Survivor: Bioinformatics Edition
+# UGA Grad Survivor
 
-**A Reigns-style card game about surviving a PhD.**
-Swipe left. Swipe right. Try not to lose your mind, your health, your money, or your relationships.
+**A PhD, one difficult choice at a time.** A Reigns-inspired card game set in UGA
+bioinformatics: advisor meetings, broken pipelines, stipend anxiety, Athens
+life, and the long road to a defense.
 
-[Play Now →](https://chenhsieh.github.io/UGA-grad-survivor/)
+[Play](https://chenhsieh.github.io/UGA-grad-survivor/) ·
+[Change history](CHANGELOG.md) · [MIT license](LICENSE)
 
-![UGA Grad Survivor Preview](og-image.png)
+![UGA Grad Survivor gameplay](media/preview.png)
 
----
+Vanilla JavaScript and CSS. No package installation, build step, or game server.
 
-## How to Play
+## How to play
 
-You're a bioinformatics PhD student. The game is set at the University of Georgia, but the situations — advisor ghosting, pipeline disasters, stipend anxiety, quals — translate to any computational biology program. Every card presents a situation — swipe left or right to make a choice. Each choice affects your stats:
+Choose an archetype, survive rotations, then choose an advisor. Each card offers
+two decisions. Keep **Mind, Body, Wallet, and Bonds above zero**, build enough
+Research for checkpoints, and work toward a defense in semester 10.
 
-- 🧠 **Mind** — sanity, focus, will to continue
-- 💪 **Body** — physical health, sleep, energy
-- 💰 **Wallet** — money, funding, financial stability
-- 🤝 **Bonds** — all relationships (advisor, friends, cohort, family)
-- 📊 **Research** — academic output; gated at milestone checkpoints
+| Input | Action |
+| --- | --- |
+| Click a choice, swipe, or drag the card | Choose left or right |
+| Left/Right arrows or A/D | Choose during play |
+| Tab, or Up/Down arrows / W/S in selection menus | Browse archetypes or advisors |
+| Enter or Space on a focused button | Activate that button |
+| Enter or Space outside a control | Begin or continue at a checkpoint |
+| ? / H during play, or the help button | Open help and theme settings |
+| Escape | Close help |
 
-If any of the first four stats hits zero, your PhD is over. Keep Research high enough to pass milestones. Survive 10 semesters and defend your dissertation to win.
+Each choice can have both gains and losses. **Last result** expands to explain
+actual changes after perks, caps, and passive drains. Pre-choice arrows show
+the card's base direction, not a guarantee of the final net change. Research
+deltas are visible afterward; its total appears at checkpoints. A separate
+network value stays hidden.
 
-## Choose Who You Are
+Eight archetypes and six advisor types shape a run, with some unlocked through
+play. Five archetypes and four advisors start available. Six endings are
+possible: Defended, Mastered Out, Burnt Out, Hospitalized, Broke, and Disappeared.
+The Mentor reduces advisor-card stat losses by **1**, boosts advisor-card Bonds
+gains by **20%**, and caps Research gains at **+10 per choice**.
 
-**📈 Overachiever** · **💻 Vibe Coder** · **🎉 Fun Haver** · **🌍 Global Student** · **🧬 Biologist** — available from the start.
+## Run locally
 
-**🕵️ Double Agent** · **🏋️ Gym Bro** · **🧩 Neurodivergent** — unlocked by reaching specific endings.
+From this directory, with Python 3 installed:
 
-After semester 1 rotations you also choose your **advisor type** (Micromanager, Ghost, Mentor, New PI, and two more unlocked by play), each with persistent perks that affect the rest of your run.
-
-Not all archetypes or advisors are available from the start. Dying unlocks something new.
-
-## Game Structure
-
-**10 semesters** across three phases, with milestone cards that gate the narrative:
-
-| Phase | Semesters | Tone |
-|-------|-----------|------|
-| The Naive Years | 1–2 | Wonder, confusion, first mistakes |
-| The Grind | 3–6 | Exhaustion, dark humor, pipeline failures |
-| The Reckoning | 7–10 | Career decisions, defense prep, the finish line |
-
-Milestone cards appear at phase boundaries — qualifying exam, paper submission, committee meetings, the career fork, scheduling the defense, and the defense itself. Your choices on milestones determine which of the 6 endings you reach.
-
-## Six Ways It Ends
-
-🎓 **Defended** — You made it.
-
-📜 **Mastered Out** — You leave with a master's. Nobody calls it failing. The program does, technically.
-
-🧠 **Burnt Out** — The pressure accumulated quietly, then all at once.
-
-🏥 **Hospitalized** — Your body filed a formal complaint.
-
-💸 **Broke** — Your card declined at the vending machine. Your stipend doesn't arrive until the 15th. It is the 3rd.
-
-👻 **Disappeared** — You stopped showing up. Nobody followed up.
-
-Each ending has its own screen. Dying unlocks new archetypes and advisors — you're meant to play more than once.
-
-## 226 Cards
-
-The cards cover the real texture of PhD life: advisor ghosting, pipeline disasters, rent increases, game day parking, the LinkedIn comparison spiral, Reviewer 2, stress baking, and whether to take the side gig.
-
-Rooted in UGA bioinformatics — Athens venues, the HPC cluster, rivalry game weekends — but the situations translate to any computational biology PhD. If you've ever fought with conda, watched a p-value land at 0.049, or seen your undergrad classmates get promoted on LinkedIn while you resubmit to Reviewer 2 — this game was made for you.
-
-## Balance
-
-Calibrated via 96,000-run Monte Carlo simulation against real PhD attrition data ([CGS](https://cgsnet.org), [Nature 2022 survey](https://www.nature.com/articles/d41586-022-03394-0)):
-
-- Overall defense rate ~54%. Random play wins far less; strategic play can reach ~80%+.
-- Financial stress is background radiation — it drains Mind and Body over time rather than killing directly, matching real attrition patterns.
-
-## Tech
-
-Zero dependencies. No build step.
-
-- Vanilla JS + CSS split across `js/engine.js`, `js/ui.js`, `js/controls.js`, `js/data/`
-- Touch swipe + mouse drag + keyboard controls
-- 226 cards across 8 pools (3 phases + universal + callbacks + archetype/PI exclusives + milestones)
-- localStorage for unlock persistence
-- Mobile-first responsive design
-
-## Deploy
-
-```bash
-# Just open it
-open index.html
-
-# Or serve it
-python3 -m http.server 8080
+```sh
+python3 -m http.server 8080 --bind 127.0.0.1
 ```
 
-For GitHub Pages: fork → Settings → Pages → deploy from `main`. Done.
+Open <http://127.0.0.1:8080/>. Stop with Ctrl+C. Any static HTTP server can serve
+the complete repository; keep `css/` and `js/` alongside `index.html`.
 
-Drop `index.html` on any static host (Netlify, Vercel, Cloudflare Pages, S3).
+Use a current browser with JavaScript, localStorage, and native dialog support.
+Browser zoom is enabled. Selection cards are native buttons, focus is visible,
+and help contains keyboard focus. Reduced-motion preferences suppress CSS
+animations. The default Institutional theme has clearer text contrast; the
+other themes retain their individual palettes.
 
-## Contributing
+## Check a change
 
-If you're a grad student and have a scenario that belongs in this game, open an issue or a PR. Card format:
+No automated build or package-managed test suite is shipped. A basic syntax
+and whitespace check needs Node.js and Git:
 
-```js
-{ id:'unique_id', tag:'Category', emoji:'🔬', title:'Card Title',
-  body:'The scenario. Be specific. Be funny. Be real.',
-  cL:'Left choice', cR:'Right choice',
-  eL:{ mind:-10, bonds:+5 }, eR:{ wallet:-8, body:+10 } }
+```sh
+for file in js/*.js js/data/*.js; do node --check "$file" || exit; done
+git diff --check
 ```
 
-Stats: `mind`, `body`, `wallet`, `bonds`, `research`. Max swing ±20 per stat. Every card should have at least one choice with a net positive.
+Then smoke the actual browser flow:
 
-## Credits
+- Begin, choose an archetype using Tab and Enter, and make both kinds of choice.
+- Expand **Last result** with Enter or Space. Confirm it describes the choice
+  just made, including net-zero results with offsetting effects.
+- Open help, move among theme buttons with Tab, change a theme, and close with
+  Escape. The run must stay unchanged while help is open.
+- Check a narrow screen, rotations/advisor selection, a semester checkpoint,
+  and an ending. Check keyboard focus after a choice.
+- Reload to confirm unlock persistence and that a fresh title screen appears.
 
-Made by [Chen Hsieh](https://chenhsieh.xyz) — UGA Bioinformatics PhD candidate, graduating June 2026.
+The notebooks in [simulation/](simulation/) are separate historical balance
+tools with their own requirements. They are not needed to run the game and do
+not establish current human completion rates.
 
-Inspired by [Reigns](https://www.devolverdigital.com/games/reigns) by Nerial.
+## Saves, sources, and limits
 
-## License
+- `uga_grad_survivor_v2` in localStorage stores unlocks and aggregate run
+  records (schema version 3); `uga_theme` stores the selected theme.
+  **The active run is not saved.** Reloading abandons it and returns to the title.
+- No login, backend, analytics, or remote gameplay API is used. Some themes
+  request Google Fonts; system fallbacks work if those requests are blocked.
+- All card content is checked in under `js/data/`. The scenarios and resource
+  model are a satirical game, not a prediction of real PhD outcomes.
+- Random card draws mean a new run may differ. There is no seeded replay UI,
+  cross-device save, or automated accessibility certification.
+- Sharing is initiated by the player and copies ending text; nothing posts
+  automatically. Clipboard behavior depends on browser permissions.
+- The interface preserves hidden Research totals and the hidden network
+  system. It does not reveal unchosen or upcoming card effects.
 
-[MIT](LICENSE)
+## Source map
+
+| Path | Responsibility |
+| --- | --- |
+| `index.html` | Static shell and script order |
+| `css/style.css` | Six themes, responsive layout, focus and motion rules |
+| `js/engine.js` | Draws, effects, passive drains, checkpoints, and saves |
+| `js/ui.js` | Screens, help dialog, and actual-consequence panel |
+| `js/controls.js` | Buttons, menu keys, and swipe/drag controls |
+| `js/data/archetypes.js` | Archetype starting stats, shared rules, and descriptions |
+| `js/data/pi-data.js` | Advisor presentation |
+| `js/data/cards-*.js` | Scenario and milestone pools |
+| `simulation/` | Historical balance notebooks |
+
+When adding a card, use a unique ID and the existing `cL` / `cR` choices and
+`eL` / `eR` effects. Preserve the perk application order and save contract;
+check the actual consequence panel at stat boundaries.
+
+Made by [Chen Hsieh](https://chenhsieh.xyz), inspired by
+[Reigns](https://www.devolverdigital.com/games/reigns) by Nerial.
