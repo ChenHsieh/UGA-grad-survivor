@@ -73,9 +73,9 @@ function renderTitle() {
 // ── Picking a path and an advisor ─────────────────────────────────
 
 const ARCH_UNLOCK_HINTS = {
-  double_agent:   'Reach semester 7 to unlock',
-  gym_bro:        'End up in the hospital to unlock',
-  neurodivergent: 'Burn out to unlock',
+  double_agent:   'Opens once you reach semester 7',
+  gym_bro:        'Opens once a run ends in the hospital',
+  neurodivergent: 'Opens once a run ends burnt out',
 };
 
 function miniStats(s) {
@@ -97,7 +97,7 @@ function renderArchetype() {
         <span class="pick-icon">${archIcon(key)}</span>
         <span class="pick-text">
           <span class="pick-name">${data.name}</span>
-          <span class="pick-blurb">${locked ? ARCH_UNLOCK_HINTS[key] || 'Unlock by playing' : data.blurb}</span>
+          <span class="pick-blurb">${locked ? ARCH_UNLOCK_HINTS[key] || 'Opens later' : data.blurb}</span>
           ${locked ? '' : `<span class="pick-stats">${miniStats(data.st)}</span>`}
         </span>
       </button>`;
@@ -117,7 +117,7 @@ function renderPISelection() {
     <p class="screen-sub">You will work for them until you graduate.</p>`;
   pis.forEach(([key, data]) => {
     const locked = !unlocked.includes(key);
-    const hint = key === 'exploiter' ? 'Leave with a master’s to unlock' : key === 'dynasty' ? 'Defend to unlock' : 'Unlock by playing';
+    const hint = key === 'exploiter' ? 'Opens once a run ends with a master’s' : key === 'dynasty' ? 'Opens once you defend' : 'Opens later';
     html += `
       <button type="button" class="pick-card ${locked ? 'locked' : ''}" ${locked ? 'disabled' : `onclick="selectPI('${key}')"`}>
         <span class="pick-icon">${piIcon(key)}</span>
@@ -347,7 +347,7 @@ function renderEnding() {
     : 'The master\'s is real and the expertise is yours. What comes next is less clear. You update your resume. You start from scratch.';
   const masterCause = {
     'Failed Quals (3 attempts)': 'You failed the qualifying exam three times.',
-    'Insufficient Research': 'Your Research was under 30 at the defense.',
+    'Insufficient Research': `Your Research was under ${GATE_NEED.ms_defense} at the defense.`,
     'Delayed Too Long': 'You pushed the defense back one time too many.',
     'Time': 'You ran out of semesters.',
   };
@@ -391,7 +391,7 @@ function renderEnding() {
   if (!d) return '<div>Error loading ending.</div>';
 
   const networkHint = (['mastered_out', 'broke'].includes(ending) && gameState.network <= 30)
-    ? `<div class="network-hint">Your career contacts were thin this run. Conferences, collaborations and saying yes to people unlock a different version of this ending.</div>`
+    ? `<div class="network-hint">Your career contacts were thin this run. Conferences, collaborations and saying yes to people lead to a different version of this ending.</div>`
     : '';
 
   const why = ending !== 'defended' && gameState.lastConsequence
@@ -418,7 +418,7 @@ function renderEnding() {
     <div class="share-section">
       <div class="share-label">Share your run</div>
       <textarea id="shareText" class="share-textarea" rows="3" onclick="this.select()">${d.shareText}\nhttps://chenhsieh.github.io/UGA-grad-survivor/</textarea>
-      <button class="share-btn" onclick="copyShare()">Copy</button>
+      <button class="share-btn" onclick="copyShare()">Copy the text</button>
       <div id="shareFeedback" class="share-feedback"></div>
     </div>
     <div class="footer-credit">Made by a UGA PhD student · chenhsieh.xyz</div>
@@ -493,8 +493,8 @@ function showHelp() {
       <h2 id="helpTitle">How to play</h2>
       <p>Drag the card left or right to answer. Or tap an answer to preview it, then tap it again to choose. With a mouse, one click chooses.</p>
       <p>While you lean toward an answer, dots appear on the bars it will move. A bigger dot means a bigger change. The dots never say up or down. The card does.</p>
-      <div class="help-stat">${statIcon('mind')}<span><strong>Mind, Body, Wallet, Friends.</strong> If any of them hits 0, the run ends. Under 20 they turn red. Wallet or Friends under 20 also cost you Mind and Body every card.</span></div>
-      <div class="help-stat">${statIcon('research')}<span><strong>Research</strong> is the long bar. The white line on it is what the next exam or committee meeting needs. Each checkpoint asks for more: ${qualsNeed()}, ${GATE_NEED.ms_committee_1}, ${GATE_NEED.ms_committee_2}, then ${GATE_NEED.ms_defense} to defend in semester 10.</span></div>
+      <div class="help-stat">${statIcon('mind')}<span><strong>Mind, Body, Wallet, Friends.</strong> If any of them hits 0, the run ends. At 20 or below they turn red. Wallet or Friends under 20 also cost you Mind and Body every card.</span></div>
+      <div class="help-stat">${statIcon('research')}<span><strong>Research</strong> is the long bar. The line across it is what the next exam or committee meeting needs. Each checkpoint asks for more: ${qualsNeed()}, ${GATE_NEED.ms_committee_1}, ${GATE_NEED.ms_committee_2}, then ${GATE_NEED.ms_defense} to defend in semester 10.</span></div>
       <div class="help-stat">${statIcon('network')}<span><strong>Career contacts</strong> come from conferences and saying yes to people. They never end a run, but they change how your ending reads.</span></div>
       <p>If a choice ends your run, you can take it back once.</p>
       <details class="how">

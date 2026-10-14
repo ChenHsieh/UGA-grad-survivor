@@ -22,7 +22,7 @@ Vanilla JavaScript and CSS. No package installation, build step, or game server.
 4. Build **Research**. The line on the Research bar is what the next checkpoint needs, and each one asks for more: qualifying exam 20 (semester 4), committee 35 (semester 6), committee 50 (semester 8), defense 65 (semester 10). Research is checked after your answer at a checkpoint, so an answer that adds Research can carry you over.
 5. If a choice ends your run, you can take it back once.
 
-The first run starts straight on a card as the Overachiever; from the second run you pick a character. After the first semester of rotations you pick an advisor. A reload keeps your run: the title offers Continue. Add `?seed=anything` to the address to replay the same card draws.
+A first visit opens straight on the first card, playing the Overachiever; from the second run you pick a character. After the first semester of rotations you pick an advisor. A reload keeps your run: the title offers Continue. Add `?seed=anything` to the address to replay the same card draws.
 
 | Input | Action |
 | --- | --- |
@@ -36,8 +36,8 @@ The first run starts straight on a card as the Overachiever; from the second run
 
 Some answers also add career contacts, shown in the result line and on the ending screen. They never end a run but change how the ending reads.
 
-Eight archetypes and six advisor types shape a run, with some unlocked through
-play. Five archetypes and four advisors start available. Six endings are
+Eight archetypes and six advisor types shape a run, and some only open after
+certain endings. Five archetypes and four advisors start available. Six endings are
 possible: Defended, Mastered Out, Burnt Out, Hospitalized, Broke, and Disappeared.
 The Mentor reduces advisor-card stat losses by **1**, boosts advisor-card Bonds
 gains by **20%**, and caps Research gains at **+10 per choice**.
@@ -83,7 +83,8 @@ worse.
 
 Then smoke the actual browser flow:
 
-- Begin, choose an archetype using Tab and Enter, and make both kinds of choice.
+- On a first visit, confirm the page opens on a card. After an ending, start a
+  new run, choose an archetype using Tab and Enter, and make both kinds of choice.
 - Expand **Last result** with Enter or Space. Confirm it describes the choice
   just made, including net-zero results with offsetting effects.
 - Open help, move among theme buttons with Tab, change a theme, and close with
@@ -98,8 +99,8 @@ completion rates.
 
 ## Saves, sources, and limits
 
-- `uga_grad_survivor_v2` in localStorage stores unlocks and aggregate run
-  records (schema version 3); `uga_grad_survivor_run` stores the run in
+- `uga_grad_survivor_v2` in localStorage stores which characters and advisors
+  are open and aggregate run records (schema version 3); `uga_grad_survivor_run` stores the run in
   progress so a reload can continue it; `uga_theme` stores the selected theme.
 - No login, backend, analytics, or remote gameplay API is used. Some themes
   request Google Fonts; system fallbacks work if those requests are blocked.
