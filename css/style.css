@@ -21,6 +21,8 @@ body {
 }
 body.in-play { padding: 8px 12px 10px; }
 .wrapper { width: 100%; max-width: 440px; position: relative; }
+.play-lab-link { position: fixed; top: 8px; right: 12px; min-height: 44px; display: inline-flex; align-items: center; color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+body.in-play .play-lab-link { display: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 button { font: inherit; }
 button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
