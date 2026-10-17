@@ -262,6 +262,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .help-content h2 { font-family: var(--font-serif); font-size: 22px; margin-bottom: 12px; color: var(--text); }
 .help-content p { font-size: 15px; line-height: 1.6; color: var(--text); margin-bottom: 12px; }
 .help-content .how p { font-size: 14px; color: var(--dim); }
+.help-content p.help-credit { font-size: 12px; line-height: 1.4; color: var(--dim); }
 .help-stat { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 15px; line-height: 1.55; }
 .help-stat .ui-icon { width: 20px; height: 20px; margin-top: 2px; color: var(--gold); }
 .help-close { width: 100%; min-height: 50px; background: var(--gold); color: var(--bg); border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px; }

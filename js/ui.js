@@ -497,6 +497,7 @@ function showHelp() {
       <div class="help-stat">${statIcon('research')}<span><strong>Research</strong> is the long bar. The line across it is what the next exam or committee meeting needs. Each checkpoint asks for more: ${qualsNeed()}, ${GATE_NEED.ms_committee_1}, ${GATE_NEED.ms_committee_2}, then ${GATE_NEED.ms_defense} to defend in semester 10.</span></div>
       <div class="help-stat">${statIcon('network')}<span><strong>Career contacts</strong> come from conferences and saying yes to people. They never end a run, but they change how your ending reads.</span></div>
       <p>If a choice ends your run, you can take it back once.</p>
+      <p class="help-credit">After Reigns by Nerial (2016). Fiction, not an official UGA product.</p>
       <details class="how">
         <summary>Words on the cards</summary>
         <p><strong>PI</strong>: the professor who runs a lab, your advisor. <strong>Rotation</strong>: a short trial stay in a lab before you pick one. <strong>Committee</strong>: the professors who check your progress. <strong>Cluster</strong> or <strong>HPC</strong>: the shared campus supercomputer. <strong>SSH</strong>: the command that logs you in to it. <strong>Pipeline</strong>: a chain of analysis steps run as code. <strong>RNA-seq</strong>: measuring which genes are switched on. <strong>Postdoc</strong>: a short research job after the PhD. <strong>ABD</strong>: all but dissertation. <strong>Desk-rejected</strong>: turned down by the editor without review. <strong>DOI</strong>: the permanent ID of a paper.</p>
