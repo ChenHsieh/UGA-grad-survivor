@@ -133,4 +133,5 @@ When adding a card, use a unique ID and the existing `cL` / `cR` choices and
 check the actual consequence panel at stat boundaries.
 
 Made by [Chen Hsieh](https://chenhsieh.xyz), inspired by
-[Reigns](https://www.devolverdigital.com/games/reigns) by Nerial.
+[Reigns](https://www.devolverdigital.com/games/reigns) by Nerial (2016).
+Fiction, not an official UGA product.
