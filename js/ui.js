@@ -10,13 +10,14 @@ const STAT_DEFS = [
 ];
 const STAT_NAMES = { mind: 'Mind', body: 'Body', wallet: 'Wallet', bonds: 'Friends', research: 'Research', network: 'Contacts' };
 // Plain words for a few card categories.
-const TAG_LABELS = { 'Cruel': 'Unfair', 'Black Swan': 'Out of Nowhere', 'Privilege': 'Uneven Ground', 'MILESTONE': 'Checkpoint', 'Milestone': 'The Program' };
+const TAG_LABELS = { 'Cruel': 'Unfair', 'Black Swan': 'Out of Nowhere', 'Privilege': 'Uneven Ground', 'MILESTONE': 'Checkpoint', 'Milestone': 'The Program',
+  'Big Mood': 'Everyday', 'Existential Event': 'Self-Doubt', 'Human Existence': 'Everyday', 'Identity Crisis': 'Self-Doubt' };
 const DANGER = 20;   // at or below: red, and Wallet/Friends start draining Mind and Body
 const WARN = 35;
 
 const SEM_LABELS = {
-  1: 'The Naive Years', 2: 'The Naive Years', 3: 'The Grind', 4: 'The Grind', 5: 'Deep In It', 6: 'Deep In It',
-  7: 'The Reckoning', 8: 'Career Crossroads', 9: 'The Final Push', 10: 'Defense or Bust'
+  1: 'Year 1, fall', 2: 'Year 1, spring', 3: 'Year 2, fall', 4: 'Year 2, spring', 5: 'Year 3, fall', 6: 'Year 3, spring',
+  7: 'Year 4, fall', 8: 'Year 4, spring', 9: 'Year 5, fall', 10: 'Year 5, spring'
 };
 
 const escapeText = text => String(text).replace(/[&<>"']/g, ch =>
@@ -234,14 +235,14 @@ function renderRotationComplete() {
 }
 
 const SEM_CONTEXT = {
-  3: 'The exam is out there somewhere.',
+  3: 'The qualifying exam is next semester.',
   4: 'The qualifying exam is this term.',
   5: () => gameState.memory.includes('quals_passed') ? 'Past the exam. The project is yours now.' : 'The exam retake is this term.',
-  6: () => gameState.memory.includes('quals_passed') ? 'Committee season.' : 'Last chance at the exam. A third miss ends the PhD with a master’s.',
-  7: 'Strong opinions about the lounge coffee.',
-  8: 'The end is almost visible.',
-  9: 'One more push.',
-  10: 'Final semester. Defense or bust.',
+  6: () => gameState.memory.includes('quals_passed') ? 'First committee meeting this semester.' : 'Last chance at the exam. A third miss ends the PhD with a master’s.',
+  7: 'Second committee meeting next semester.',
+  8: 'Second committee meeting this semester.',
+  9: 'Book the defense room this semester.',
+  10: 'Last semester. The defense is this one.',
 };
 function semContext(n) { const c = SEM_CONTEXT[n]; return typeof c === 'function' ? c() : (c || ''); }
 
@@ -344,9 +345,9 @@ function renderPlay() {
       { min: 0,  text: 'Career contacts: almost none. You don\'t know anyone outside this department. The committee doesn\'t either.' }
     ],
     ms_defense_sched: [
-      { min: 50, text: 'People at conferences know your name. The job search has already started informally.' },
+      { min: 50, text: 'People at conferences know your name. Two of them have asked when you finish.' },
       { min: 25, text: 'You have some contacts. The market will tell you if it\'s enough.' },
-      { min: 0,  text: 'Career contacts: almost none. That is starting to feel like the kind of thing that matters.' }
+      { min: 0,  text: 'Career contacts: almost none. Nearly everyone you know works in this building.' }
     ]
   };
   if (card.milestone && networkFlavor[card.id]) {
@@ -488,7 +489,7 @@ function renderEnding() {
   recordRun();
   const ending = gameState.ending;
   const networkMsg = gameState.network > 50
-    ? 'Multiple paths are open. Industry reached out before you even updated your LinkedIn. The degree and the network landed at the same time.'
+    ? 'Two recruiters emailed before you updated your LinkedIn. You have options, and people to ask about them.'
     : gameState.network > 25
     ? 'You have a few leads: people who remember your name from conferences, a cold email that got a warm reply. It\'s enough to start.'
     : 'The degree is real. Your career contacts are thin. You\'ll spend the next few months explaining your work to people who weren\'t in the room.';
@@ -499,8 +500,8 @@ function renderEnding() {
   const sem = gameState.semester;
   const cards = gameState.totalCards;
   const masterBody = gameState.network > 30
-    ? 'The master\'s opens a door your PhD would have kept closed. A contact from a conference is now a hiring manager. You send one email. They respond in an hour.'
-    : 'The master\'s is real and the expertise is yours. What comes next is less clear. You update your resume. You start from scratch.';
+    ? 'A contact from a conference is now a hiring manager. You send one email with the master\'s on your CV. They reply within the hour.'
+    : 'The master\'s is real, and so is what you learned. You rewrite your resume around it and start applying.';
   const masterCause = {
     'Failed Quals (3 attempts)': 'You failed the qualifying exam three times.',
     'Insufficient Research': `Your Research was under ${GATE_NEED.ms_defense} at the defense.`,
@@ -510,7 +511,7 @@ function renderEnding() {
   const endingData = {
     defended: {
       title: 'Dr. You',
-      body: `You stood in front of your committee and defended your research. There were hard questions. You answered most of them. They approved you anyway. Dr. is a title you now possess.<br><br>${networkMsg}`,
+      body: `You stood in front of your committee for 90 minutes. There were hard questions and you answered most of them. Afterwards they shook your hand and called you Doctor.<br><br>${networkMsg}`,
       shareText: `Played ${archName}${piPhrase} and actually made it to defense. Semester ${sem}, ${cards} cards.\nUGA Grad Survivor:`,
     },
     mastered_out: {
@@ -521,18 +522,18 @@ function renderEnding() {
     },
     burnt_out: {
       title: 'Burnt Out', cause: 'Mind hit 0.',
-      body: 'The 2am sessions. The unanswered emails. The feedback that felt more like verdict than guidance. It accumulated until it didn\'t. Your mind needed rest. The program didn\'t stop to notice.',
+      body: 'The 2am sessions, the unanswered emails, the feedback that read like a verdict. One morning you could not open the laptop. The program kept going without you.',
       shareText: `${archName}${piPhrase}. The mind gave out in semester ${sem}. ${cards} cards deep.\nUGA Grad Survivor:`,
     },
     hospitalized: {
       title: 'Hospitalized', cause: 'Body hit 0.',
-      body: 'Your body filed a formal complaint. The all-nighters, the skipped meals, the stress. It all came due at once. The ER copay was $500. Your advisor asked when you\'d be back.',
-      shareText: `${archName}${piPhrase}. Body filed a formal complaint in semester ${sem}. ${cards} cards played.\nUGA Grad Survivor:`,
+      body: 'The all-nighters and skipped meals came due on the same night. The ER copay was $500. Your advisor emailed to ask when you would be back.',
+      shareText: `${archName}${piPhrase}. Ended up in the ER in semester ${sem}. ${cards} cards played.\nUGA Grad Survivor:`,
     },
     broke: {
-      title: 'Financially Liquidated', cause: 'Wallet hit 0.',
+      title: 'Out of Money', cause: 'Wallet hit 0.',
       body: gameState.network > 30
-        ? 'An email arrives before your card declines a second time. Someone you met at a poster session has a contract role. Two weeks of work. Enough to breathe. Networks pay out in strange moments.'
+        ? 'Before your card declines a second time, an email arrives. Someone you met at a poster session has a two-week contract job. It covers rent.'
         : 'Your card declined at the vending machine in the department building. You have $3.47. There\'s no one to call. Your stipend doesn\'t arrive until the 15th. It is the 3rd.',
       shareText: `${archName}${piPhrase}. Card declined in semester ${sem}. The stipend wasn\'t enough.\nUGA Grad Survivor:`,
     },

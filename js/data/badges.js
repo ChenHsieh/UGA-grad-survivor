@@ -82,7 +82,7 @@ const NARRATOR_SEM = {
   3: 'Second year. Nobody warned me either.',
   4: 'Exam term. Eat something first.',
   5: 'Still here. That counts.',
-  6: 'Halfway. The hard part is quiet.',
+  6: 'Halfway. Nobody throws a party for it.',
   7: 'Fourth year. Everyone gets strange here.',
   8: 'Look up once in a while.',
   9: 'I can see the door from here.',
