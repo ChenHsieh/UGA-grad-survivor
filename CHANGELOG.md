@@ -172,3 +172,11 @@ A first visit opens on the first card; the title screen is now for returning pla
 ## vNext — Secret Diary Cards *(planned)*
 
 A hidden card layer: personal journal entries that surface based on accumulated run history, offering narrative reflection and small stat effects.
+
+---
+
+## v0.12 — Badges, a narrator and a shorter run
+
+Every run, win or loss, now ends on one of 20 hand-written badges, built from the bar you protected and the bar you let go. A reveal screen comes first, then the ending. "Save image" draws the badge as a 1080 x 1350 picture with no card text and no names; the share line is one sentence, and each badge has a link (`/r/<badge>/`) that previews as that badge.
+
+A fifth-year in your lab narrates: a promise on the first screen, one line at each semester change, one at the reveal. Cards name who is talking instead of a category. "Begin" deals a character and an advisor face-up for two seconds; "Choose who to play instead" keeps the full list. Card text is capped at 25 words with every number kept, and non-checkpoint semester changes are a 1.2 second strip you can tap away. The game's own name sits top-left on every screen and opens the title menu. The title screen has a Transcript shelf (badges, endings, characters, advisors). At 320 px the bars show icons and numbers. Old saves load unchanged and start with no badges.

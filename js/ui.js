@@ -673,6 +673,7 @@ function showHelp() {
       <div class="help-stat">${statIcon('mind')}<span><strong>Mind, Body, Wallet, Friends.</strong> If any of them hits 0, the run ends. At 20 or below they turn red. Wallet or Friends under 20 also cost you Mind and Body every card.</span></div>
       <div class="help-stat">${statIcon('research')}<span><strong>Research</strong> is the long bar. The line across it is what the next exam or committee meeting needs. Each checkpoint asks for more: ${qualsNeed()}, ${GATE_NEED.ms_committee_1}, ${GATE_NEED.ms_committee_2}, then ${GATE_NEED.ms_defense} to defend in semester 10.</span></div>
       <div class="help-stat">${statIcon('network')}<span><strong>Career contacts</strong> come from conferences and saying yes to people. They never end a run, but they change how your ending reads.</span></div>
+      <p>Every run ends on a badge, wins and losses alike. It comes from the bar you protected most and the bar you let go. Your transcript on the title screen keeps them all.</p>
       <p>If a choice ends your run, you can take it back once.</p>
       <p class="help-credit">After Reigns by Nerial (2016). Fiction, not an official UGA product.</p>
       <details class="how">
