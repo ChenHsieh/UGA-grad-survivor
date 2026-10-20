@@ -47,7 +47,7 @@ const ARCH_UNLOCK_HINTS = {
   neurodivergent: 'Opens once a run ends burnt out',
 };
 const GAME_URL = 'https://chenhsieh.github.io/UGA-grad-survivor/';
-let dealTimer = null, stripTimer = null;
+let stripTimer = null;
 
 function narr(text) { return `<span class="narr">${NARRATOR}:</span> ${text}`; }
 
@@ -59,7 +59,7 @@ function brandHtml(plain) {
 
 // The brand in the top-left corner opens the title menu; a run in progress waits behind "Continue".
 function goTitle() {
-  clearTimeout(dealTimer); clearTimeout(stripTimer);
+  clearTimeout(stripTimer);
   if (helpVisible) closeHelp();
   gameState.phase = 'title';
   render();
@@ -71,17 +71,16 @@ function zoneOf(v) { return v <= DANGER ? 'danger' : v <= WARN ? 'warn' : 'ok'; 
 
 function pickRandom(list) { return list[Math.floor(Math.random() * list.length)]; }
 
-// "Begin" deals a character and an advisor face-up for a moment, then card 1.
-// The very first run is always the Overachiever, to teach the game; the advisor is still dealt.
+// "Begin" deals a character and shows it on a start screen that waits for the player.
+// The very first run is always the Overachiever, to teach the game. The advisor is not dealt:
+// you pick one yourself after semester 1.
 function beginGame() {
-  const advisor = pickRandom(getSelectablePIs());
   const arch = save.totalRuns ? pickRandom(getSelectableArchetypes()) : 'overachiever';
-  selectArchetype(arch, { deal: true, dealtPI: advisor });
+  selectArchetype(arch, { deal: true });
   render();
 }
 
 function startDealt() {
-  clearTimeout(dealTimer);
   if (gameState.phase !== 'deal') return;
   gameState.phase = 'play';
   render();
@@ -109,7 +108,7 @@ function renderTitle() {
       <p class="tagline">Ten semesters, two answers per card. At the end a badge says what kind of grad student you were.<br>Keep four bars above zero and do enough research to defend.</p>
       ${run ? `<button class="begin-btn" onclick="resumeRun()">Continue<span class="btn-sub">${runLine}</span></button>
       <button class="new-run-btn" onclick="beginGame()">New run</button>`
-        : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}<span class="btn-sub">A character and an advisor are dealt</span></button>`}
+        : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}<span class="btn-sub">You are dealt a character. You pick an advisor after semester 1.</span></button>`}
       <button class="link-btn" onclick="chooseInstead()">Choose who to play instead</button>
       <button class="new-run-btn transcript-btn" onclick="openTranscript()">Transcript<span class="btn-sub">${lang === 'zh' ? UI_ZH.badgesOf(save.badges.length, BADGE_IDS.length) + ' · 結局 ' + save.endings.length + ' / 6' : `Badges ${save.badges.length} of ${BADGE_IDS.length} · Endings ${save.endings.length} of 6`}</span></button>
       <div class="any-school">Any grad school. This one happens to be UGA.</div>
@@ -120,15 +119,17 @@ function renderTitle() {
 }
 
 function renderDeal() {
-  const a = ARCHETYPE_DATA[gameState.archetype], pi = PI_DATA[gameState.dealtPI];
-  const hand = (kind, icon, name, blurb) => `<div class="deal-card"><div class="deal-kind">${kind}</div><div class="deal-icon">${icon}</div><div class="deal-name">${name}</div><div class="deal-blurb">${blurb}</div></div>`;
-  return `<div class="deal-screen" onclick="startDealt()">
-    <div class="deal-label">Your hand</div>
+  const a = ARCHETYPE_DATA[gameState.archetype];
+  const advisors = getSelectablePIs();
+  const card = (kind, icon, name, change, extra) => `<div class="deal-card"><div class="deal-kind">${kind}</div><div class="deal-icon">${icon}</div><div class="deal-name">${name}</div><div class="deal-blurb">${change}</div>${extra || ''}</div>`;
+  return `<div class="deal-screen">
+    <div class="deal-label">Before you start</div>
     <div class="deal-cards">
-      ${hand('You', archIcon(gameState.archetype), a.name, a.blurb.split('. ')[0].replace(/\.$/, '') + '.')}
-      ${pi ? hand('Advisor', piIcon(gameState.dealtPI), pi.name, pi.blurb.split('. ')[0].replace(/\.$/, '') + '.') : ''}
+      ${card('You are', archIcon(gameState.archetype), a.name, a.blurb, `<div class="deal-stats">${miniStats(a.st)}</div>`)}
+      ${card('Your advisor', `<span class="deal-icons">${advisors.slice(0, 4).map(k => piIcon(k)).join('')}</span>`, 'You choose, later', 'After semester 1 you pick one of ' + advisors.length + '. Each changes how fast Research grows and which costs hit you harder.')}
     </div>
-    <div class="deal-sub">Tap to start. You pick your advisor for real after semester 1.</div>
+    <button class="begin-btn deal-go" onclick="startDealt()">Start semester 1</button>
+    <button class="link-btn" onclick="chooseInstead()">Choose who to play instead</button>
   </div>`;
 }
 
@@ -171,16 +172,15 @@ function renderPISelection() {
   const unlocked = save.unlockedPIs || ['micromanager', 'ghost', 'mentor', 'new_pi'];
   let html = `<div class="pick-screen">
     <h1 class="screen-title">Pick your advisor</h1>
-    <p class="screen-sub">You will work for them until you graduate.</p>`;
+    <p class="screen-sub">Your advisor changes how fast Research grows and which costs hit you harder, until you graduate. Greyed-out advisors open after certain endings.</p>`;
   pis.forEach(([key, data]) => {
     const locked = !unlocked.includes(key);
     const hint = PI_UNLOCK_HINTS[key] || 'Opens later';
-    const dealt = key === gameState.dealtPI;
     html += `
-      <button type="button" class="pick-card ${locked ? 'locked' : ''} ${dealt ? 'selected' : ''}" ${locked ? 'disabled' : `onclick="selectPI('${key}')"`}>
+      <button type="button" class="pick-card ${locked ? 'locked' : ''}" ${locked ? 'disabled' : `onclick="selectPI('${key}')"`}>
         <span class="pick-icon">${piIcon(key)}</span>
         <span class="pick-text">
-          <span class="pick-name">${data.name}${dealt ? ' <span class="dealt-tag">dealt</span>' : ''}</span>
+          <span class="pick-name">${data.name}</span>
           <span class="pick-blurb">${locked ? hint : data.blurb}</span>
         </span>
       </button>`;
@@ -373,7 +373,7 @@ function renderPlay() {
     </div>
     <div class="card-container">
       <div class="card-ghost"></div>
-      ${gameState.strip ? `<button type="button" class="strip" id="strip" onclick="dismissStrip()"><span class="strip-sem">Semester ${gameState.strip.sem} <span class="strip-of">of 10</span></span><span class="strip-ctx">${SEM_LABELS[gameState.strip.sem] || ''}. ${semContext(gameState.strip.sem)}</span><span class="strip-narr">${narr(NARRATOR_SEM[gameState.strip.sem] || '')}</span><span class="strip-skip">Tap to skip</span></button>` : ''}
+      ${gameState.strip ? `<button type="button" class="strip" id="strip" onclick="dismissStrip()"><span class="strip-sem">Semester ${gameState.strip.sem} <span class="strip-of">of 10</span></span><span class="strip-ctx">${SEM_LABELS[gameState.strip.sem] || ''}. ${semContext(gameState.strip.sem)}</span><span class="strip-narr">${narr(NARRATOR_SEM[gameState.strip.sem] || '')}</span><span class="strip-skip">Tap to continue</span></button>` : ''}
       <div class="card" id="card">
         <div class="card-tag">${escapeText(speakerFor(card))}</div>
         <div class="card-title">${card.title}</div>
@@ -499,7 +499,7 @@ function renderEnding() {
   const sem = gameState.semester;
   const cards = gameState.totalCards;
   const masterBody = gameState.network > 30
-    ? 'The master\'s opens a door your PhD would have kept closed. A contact from the conference two years ago is now a hiring manager. You send one email. They respond in an hour.'
+    ? 'The master\'s opens a door your PhD would have kept closed. A contact from a conference is now a hiring manager. You send one email. They respond in an hour.'
     : 'The master\'s is real and the expertise is yours. What comes next is less clear. You update your resume. You start from scratch.';
   const masterCause = {
     'Failed Quals (3 attempts)': 'You failed the qualifying exam three times.',
@@ -601,7 +601,7 @@ function renderEndingGrid() {
       ? `<div class="ending-slot unlocked ${now ? 'now' : ''}"><div class="slot-emoji">${endingIcon(e.id)}</div><div class="slot-name">${e.name}</div></div>`
       : `<div class="ending-slot locked"><div class="slot-lock">?</div><div class="slot-name">Not yet</div></div>`;
   }).join('')}</div>
-  <div class="run-meta">${save.totalRuns <= 1 ? 'Next run you choose who to play. ' : ''}${save.archetypes.length} of 8 characters open.</div>`;
+  <div class="run-meta">${save.totalRuns <= 1 ? 'The next run deals a random character. To pick one yourself, use “Choose who to play instead” on the title screen. ' : ''}${save.archetypes.length} of 8 characters open.</div>`;
 }
 
 // ── Render ────────────────────────────────────────────────────────
@@ -616,7 +616,7 @@ function dismissStrip() {
 function render() {
   const app = document.getElementById('app');
   resetLean();
-  clearTimeout(dealTimer); clearTimeout(stripTimer);
+  clearTimeout(stripTimer);
   const phase = gameState.phase;
   let html = '';
   if (phase === 'title') html = renderTitle();
@@ -641,14 +641,12 @@ function render() {
     if (body) body.classList.toggle('overflows', body.scrollHeight > body.clientHeight + 4);
     // Change numbers play once, then leave, so they cannot replay later.
     app.querySelectorAll('.float').forEach(el => el.addEventListener('animationend', () => el.remove()));
-    if (gameState.strip) stripTimer = setTimeout(dismissStrip, 1200);
   }
-  if (phase === 'deal') dealTimer = setTimeout(startDealt, 2000);
   if (phase === 'ending' && gameState.badgeSeen) paintBadgePreview();
   persistRun();
   if (renderedPhase !== phase) {
     window.scrollTo(0, 0);
-    if (phase !== 'title' && phase !== 'play' && phase !== 'deal') {
+    if (phase !== 'title' && phase !== 'play' && phase !== 'deal' && !(phase === 'pi_selection' && lastPointerType === 'touch')) {
       app.querySelector('.pick-card.selected, .pick-card:not(.locked), .sem-advance-btn, .takeback-btn, .play-again-btn, .reveal-btn')?.focus({ preventScroll: true });
     }
   }

@@ -33,7 +33,7 @@ let save = { version: 3, badges: [], endings: [], archetypes: ['overachiever', '
 let gameState = {
   phase: 'title', archetype: null, piType: null, st: {mind:50, body:50, wallet:50, bonds:50, research:50}, semester: 1, cardCount: 0,
   totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null, lastConsequence: null,
-  track: null, dealtPI: null, badge: null, badgeSeen: false
+  track: null, when: {}, badge: null, badgeSeen: false
 };
 
 function getPhase(semester) {
@@ -57,7 +57,7 @@ function saveSave() { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
 
 function newTrack() { return { n: 0, sum: { mind: 0, body: 0, wallet: 0, bonds: 0, research: 0 } }; }
 
-// opts.deal: the run was dealt (character and advisor face-up for a moment before card 1).
+// opts.deal: the run was dealt a character; a start screen shows it and what it changes before card 1.
 function selectArchetype(arch, opts) {
   opts = opts || {};
   gameState.archetype = arch;
@@ -78,7 +78,7 @@ function selectArchetype(arch, opts) {
   gameState.recorded = false;
   gameState.undoUsed = false;
   gameState.track = newTrack();
-  gameState.dealtPI = opts.dealtPI || null;
+  gameState.when = {};
   gameState.badge = null;
   gameState.badgeSeen = false;
   undoSnapshot = null;
@@ -104,6 +104,26 @@ function getMilestoneForSemester(sem) {
   return MILESTONE_CARDS.find(c => c.semester === sem) || null;
 }
 
+// Cards can say which half of the academic year they belong to: semester 1 is fall, 2 is spring, and so on.
+function inSeason(c, sem) {
+  if (c.season === 'fall') return sem % 2 === 1;
+  if (c.season === 'spring') return sem % 2 === 0;
+  return true;
+}
+// A callback card needs `after` semesters to have passed since the card that set its flag.
+function callbackReady(c, sem) {
+  if (c.minSem && sem < c.minSem) return false;
+  if (c.maxSem && sem > c.maxSem) return false;
+  if (!inSeason(c, sem)) return false;
+  if (gameState.memory.includes(c.id)) return false;
+  if (c.requires && !c.requires.every(r => gameState.memory.includes(r))) return false;
+  if (c.after) {
+    const when = gameState.when || {};   // runs saved before this field existed are not held back
+    if (!c.requires.every(r => when[r] === undefined || sem - when[r] >= c.after)) return false;
+  }
+  return true;
+}
+
 function drawCard() {
   const phase = getPhase(gameState.semester);
   let cardPool = [];
@@ -117,24 +137,20 @@ function drawCard() {
   cardPool = cardPool.filter(c => {
     if (c.minSem && sem < c.minSem) return false;
     if (c.maxSem && sem > c.maxSem) return false;
-    return true;
+    return inSeason(c, sem);
   });
   cardPool = cardPool.filter(c => !gameState.memory.includes(c.id));
   // Some cards tell the same story twice (two rent hikes); seeing one removes the other.
   cardPool = cardPool.filter(c => !(c.excludes && c.excludes.some(id => gameState.memory.includes(id))));
-  cardPool = cardPool.concat(CALLBACK_CARDS.filter(c => {
-    if (gameState.memory.includes(c.id)) return false;
-    if (c.requires && !c.requires.every(r => gameState.memory.includes(r))) return false;
-    return true;
-  }));
+  cardPool = cardPool.concat(CALLBACK_CARDS.filter(c => callbackReady(c, sem)));
 
   // Add archetype-exclusive cards (weighted 2x for more frequent appearance)
   const archExclusive = EXCLUSIVE_CARDS.filter(c => c.exclusive === gameState.archetype && !gameState.memory.includes(c.id));
-  archExclusive.forEach(c => { if (c.minSem && sem < c.minSem) return; if (c.maxSem && sem > c.maxSem) return; cardPool.push(c); cardPool.push(c); }); // 2x weight
+  archExclusive.forEach(c => { if (c.minSem && sem < c.minSem) return; if (c.maxSem && sem > c.maxSem) return; if (!inSeason(c, sem)) return; cardPool.push(c); cardPool.push(c); }); // 2x weight
   // Add PI-exclusive cards (weighted 2x)
   if (gameState.piType) {
     const piExclusive = PI_EXCLUSIVE_CARDS.filter(c => c.exclusive === gameState.piType && !gameState.memory.includes(c.id));
-    piExclusive.forEach(c => { if (c.minSem && sem < c.minSem) return; if (c.maxSem && sem > c.maxSem) return; cardPool.push(c); cardPool.push(c); });
+    piExclusive.forEach(c => { if (c.minSem && sem < c.minSem) return; if (c.maxSem && sem > c.maxSem) return; if (!inSeason(c, sem)) return; cardPool.push(c); cardPool.push(c); });
   }
 
   // Serve milestone card after 3 regular cards, if one exists for this semester
@@ -159,7 +175,7 @@ function drawCard() {
     if (opener) return opener;
   }
 
-  if (cardPool.length === 0) cardPool = UNIVERSAL_CARDS.filter(c => !gameState.memory.includes(c.id));
+  if (cardPool.length === 0) cardPool = UNIVERSAL_CARDS.filter(c => !gameState.memory.includes(c.id) && (!c.minSem || sem >= c.minSem) && (!c.maxSem || sem <= c.maxSem) && inSeason(c, sem));
   if (cardPool.length === 0) {
     gameState.phase = 'ending';
     gameState.ending = 'defended';
@@ -315,7 +331,8 @@ function choose(side) {
   }
   recordConsequenceStep('Visa pressure');
 
-  if (card.sets) card.sets.forEach(flag => { if (!gameState.memory.includes(flag)) gameState.memory.push(flag); });
+  if (!gameState.when) gameState.when = {};
+  if (card.sets) card.sets.forEach(flag => { if (!gameState.memory.includes(flag)) gameState.memory.push(flag); gameState.when[flag] = gameState.semester; });
   gameState.memory.push(card.id);
 
   gameState.totalCards++;
@@ -377,15 +394,14 @@ function continueSemester(asStrip) {
 // Called from rotation_complete transition screen
 function continueToPI() {
   gameState.phase = 'pi_selection';
-  const dealt = typeof getSelectablePIs === 'function' ? getSelectablePIs().indexOf(gameState.dealtPI) : -1;
-  menuIndex = Math.max(0, dealt);
+  menuIndex = 0;
   render();
-  setTimeout(() => highlightArchetype(menuIndex), 50);
+  // Keyboard users get the first advisor highlighted; touch users get a plain list with nothing pre-chosen.
+  if (typeof lastPointerType === 'undefined' || lastPointerType !== 'touch') setTimeout(() => highlightArchetype(menuIndex), 50);
 }
 
 // PI SELECTION
 function selectPI(piKey) {
-  gameState.dealtPI = null;
   gameState.piType = piKey;
   gameState.cardCount = 0;
   gameState.semester++;

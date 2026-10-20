@@ -65,7 +65,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .lab-link { font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 44px; display: inline-flex; align-items: center; }
 .transcript-btn { margin-top: 4px; }
 .transcript-btn .btn-sub { display: block; font-size: 13px; font-weight: 400; color: var(--dim); margin-top: 2px; }
-.dealt-tag { font-family: var(--font-sans); font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold); border-radius: 6px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; }
 
 /* ── Pick a path / an advisor ──────────────────── */
 .pick-screen { padding: 8px 0 24px; animation: screenIn 0.3s ease-out; }
@@ -279,18 +278,20 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .strip-narr { font-size: 13.5px; color: var(--dim); font-style: italic; line-height: 1.4; }
 .strip-skip { font-size: 11.5px; color: var(--muted); letter-spacing: 0.6px; margin-top: 2px; }
 
-/* ── Dealt start ─────────────────────────────────── */
-.deal-screen { min-height: calc(100dvh - 80px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; cursor: pointer; animation: screenIn 0.3s ease-out; }
+/* ── Start screen: the dealt character and the later advisor ─────── */
+.deal-screen { min-height: calc(100dvh - 80px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; animation: screenIn 0.3s ease-out; padding-bottom: 16px; }
 .deal-label { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-.deal-cards { display: flex; gap: 12px; width: 100%; justify-content: center; }
-.deal-card { flex: 1 1 0; max-width: 200px; min-width: 0; background: var(--card-bg); color: var(--card-text); border-radius: 14px; padding: 12px 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); animation: dealIn 0.42s ease-out both; }
-.deal-card:nth-child(2) { animation-delay: 0.18s; }
-@keyframes dealIn { from { transform: translateY(24px) rotate(-3deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.deal-cards { display: flex; gap: 12px; width: 100%; justify-content: center; align-items: stretch; }
+.deal-card { flex: 1 1 0; max-width: 200px; min-width: 0; background: var(--card-bg); color: var(--card-text); border-radius: 14px; padding: 12px 10px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
 .deal-kind { font-size: 11.5px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 700; color: var(--card-dim); }
 .deal-icon svg { width: 54px; height: 54px; display: block; }
+.deal-icons { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; width: 90px; min-height: 54px; align-content: center; }
+.deal-icons svg { width: 40px !important; height: 40px !important; }
 .deal-name { font-family: var(--font-serif); font-size: 17px; font-weight: 700; line-height: 1.2; }
 .deal-blurb { font-size: 13px; line-height: 1.4; color: var(--card-dim); }
-.deal-sub { font-size: 13.5px; color: var(--dim); max-width: 300px; line-height: 1.45; }
+.deal-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: 12px; color: var(--card-dim); margin-top: auto; padding-top: 6px; }
+.deal-stats .mini-stat { color: var(--card-text); }
+.deal-go { width: 100%; max-width: 320px; }
 
 /* ── Badge reveal ────────────────────────────────── */
 .reveal-screen { text-align: center; padding: 10px 4px 28px; min-height: calc(100dvh - 80px); display: flex; flex-direction: column; align-items: center; justify-content: center; animation: screenIn 0.4s ease-out; }
@@ -452,3 +453,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .lang-btn.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
 html[lang="zh-Hant"] .badge-name { font-family: var(--font-serif), "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif; line-height: 1.25; }
 @media (max-width: 340px) { .badge-ring { width: 170px; height: 170px; } .badge-art svg { width: 154px; height: 154px; } }
+
+/* The Start-semester button stays on screen on small phones instead of waiting below the fold. */
+.semester-advance-screen .sem-advance-btn { position: sticky; bottom: 12px; z-index: 2; box-shadow: 0 0 0 12px var(--bg); margin-top: 8px; }
