@@ -109,6 +109,14 @@ for (const id of Object.keys(FACTS)) if (!cards[id]) fail(`FACTS names a card th
 for (const id of NEUTRAL) if (!cards[id]) fail(`NEUTRAL names a card that does not exist: ${id}`);
 // "N years left / to go" depends on where the player is, so no card may say it.
 for (const c of Object.values(cards)) { const m = [c.title, c.body, c.cL, c.cR].join(' ').match(/\b\w+ (years?|semesters?|months?) (left|to go|remain\w*)\b/i); if (m) fail(`${c.id} counts time left: "${m[0]}"`); }
+// The advisor is chosen at the end of semester 1 and the committee forms in semester 2, so no card
+// may talk about "your advisor", "your PI" or "your committee" before semester 2.
+const ADVISOR_RE = /\b(advisor|PI|supervisor|committee)\b/i;
+const OTHERS = new Set(['five_points_bar','volunteered_committee','ms_rotation']);   // someone else's advisor / a different committee
+for (const c of Object.values(cards)) {
+  if (OTHERS.has(c.id) || !ADVISOR_RE.test([c.title, c.body, c.cL, c.cR].join(' '))) continue;
+  if (win[c.id][2].length && win[c.id][0] < 2) fail(`${c.id} mentions the advisor or committee but can appear in semester ${win[c.id][0]}`);
+}
 // a literal "Semester N" in card text must match the only semester it can appear in
 for (const c of Object.values(cards)) {
   const m = [c.title, c.body, c.cL, c.cR].join(' ').match(/\bSemester (\d+)\b/);

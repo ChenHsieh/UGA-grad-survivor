@@ -647,7 +647,7 @@ function render() {
   persistRun();
   if (renderedPhase !== phase) {
     window.scrollTo(0, 0);
-    if (phase !== 'title' && phase !== 'play' && phase !== 'deal') {
+    if (phase !== 'title' && phase !== 'play' && phase !== 'deal' && !(phase === 'pi_selection' && lastPointerType === 'touch')) {
       app.querySelector('.pick-card.selected, .pick-card:not(.locked), .sem-advance-btn, .takeback-btn, .play-again-btn, .reveal-btn')?.focus({ preventScroll: true });
     }
   }
