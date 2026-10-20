@@ -417,8 +417,8 @@ function renderEnding() {
     ${renderEndingGrid()}
     <div class="share-section">
       <div class="share-label">Share your run</div>
-      <textarea id="shareText" class="share-textarea" rows="3" onclick="this.select()">${d.shareText}\nhttps://chenhsieh.github.io/UGA-grad-survivor/</textarea>
-      <button class="share-btn" onclick="copyShare()">Copy the text</button>
+      <textarea id="shareText" class="share-textarea" rows="3" onclick="this.select()">${shareLine(ending, sem, gameState.network)}\nhttps://chenhsieh.github.io/UGA-grad-survivor/</textarea>
+      <button class="share-btn" onclick="shareRun()">Share</button>
       <div id="shareFeedback" class="share-feedback"></div>
     </div>
     <div class="footer-credit">Made by a UGA PhD student · chenhsieh.xyz</div>
@@ -522,6 +522,22 @@ function showHelp() {
   document.body.appendChild(overlay);
   overlay.showModal();
   overlay.querySelector('.help-content').focus();
+}
+
+// A short result line with no card text in it: what happened, when, and how many career contacts.
+function shareLine(ending, sem, contacts) {
+  const what = { defended: 'Defended', mastered_out: 'Left with a master\'s', burnt_out: 'Burnt out', hospitalized: 'Ended in hospital', broke: 'Ran out of money', disappeared: 'Stopped showing up' }[ending] || 'Finished';
+  return `UGA Grad Survivor: ${what} in semester ${sem}, ${contacts} career ${contacts === 1 ? 'contact' : 'contacts'}.`;
+}
+
+// Web Share where the browser has it, otherwise copy the same text.
+async function shareRun() {
+  const text = document.getElementById('shareText').value;
+  if (navigator.share) {
+    try { await navigator.share({ text }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  copyShare();
 }
 
 function copyShare() {
