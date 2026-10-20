@@ -7,10 +7,10 @@ const ARCHETYPE_DATA = {
     st: { mind: 50, body: 45, wallet: 60, bonds: 50, research: 10 }
   },
   vibe_coder: {
-    blurb: 'Lets the AI write the code. Pipeline cards pay more, people cards hurt more.',
+    blurb: 'Lets the AI write the code. Cluster cards pay more, people cards hurt more.',
     emoji: '🤖', name: 'The Vibe-Coder', perk: 'Prompt Engineering',
     rules: { techGain: 1.5, socialLoss: 1.3 },
-    get desc() { const rules = this.rules; return `Has a new AI tool to show you every week. Gains on pipeline cards are ${rules.techGain}x; losses on social and everyday-life cards are ${rules.socialLoss}x.`; },
+    get desc() { const rules = this.rules; return `Has a new AI tool to show you every week. Gains on cards from The cluster are ${rules.techGain}x; losses on social and everyday-life cards are ${rules.socialLoss}x.`; },
     st: { mind: 60, body: 47, wallet: 60, bonds: 45, research: 15 }
   },
   fun_haver: {
@@ -31,7 +31,7 @@ const ARCHETYPE_DATA = {
     blurb: 'Knows the organism, fears the terminal. Friends soften code disasters.',
     emoji: '🧫', name: 'The Biologist', perk: '"Can I Send You My Data?"',
     rules: { highBonds: 50, lowBonds: 30, supportedLoss: 0.5, isolatedLoss: 2, labGain: 1.3, qualsResearch: 25 },
-    get desc() { const rules = this.rules; return `Knows the organism inside out, opens .py files in Word. Research losses on pipeline cards are ${rules.supportedLoss}x with Friends above ${rules.highBonds}, ${rules.isolatedLoss}x below ${rules.lowBonds}. Lab Life and Lab Politics Research gains are ${rules.labGain}x. The qualifying exam needs ${rules.qualsResearch} Research.`; },
+    get desc() { const rules = this.rules; return `Knows the organism inside out, opens .py files in Word. Research losses on cards from The cluster are ${rules.supportedLoss}x with Friends above ${rules.highBonds}, ${rules.isolatedLoss}x below ${rules.lowBonds}. Lab Life and Lab Politics Research gains are ${rules.labGain}x. The qualifying exam needs ${rules.qualsResearch} Research.`; },
     st: { mind: 45, body: 50, wallet: 55, bonds: 60, research: 10 }
   },
   double_agent: {

@@ -108,7 +108,7 @@ function renderTitle() {
       <p class="tagline">Ten semesters, two answers per card. At the end a badge says what kind of grad student you were.<br>Keep four bars above zero and do enough research to defend.</p>
       ${run ? `<button class="begin-btn" onclick="resumeRun()">Continue<span class="btn-sub">${runLine}</span></button>
       <button class="new-run-btn" onclick="beginGame()">New run</button>`
-        : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}<span class="btn-sub">You are dealt a character. You pick an advisor after semester 1.</span></button>`}
+        : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}<span class="btn-sub">You are dealt a character. You pick an advisor after semester&nbsp;1.</span></button>`}
       <button class="link-btn" onclick="chooseInstead()">Choose who to play instead</button>
       <button class="new-run-btn transcript-btn" onclick="openTranscript()">Transcript<span class="btn-sub">${lang === 'zh' ? UI_ZH.badgesOf(save.badges.length, BADGE_IDS.length) + ' · 結局 ' + save.endings.length + ' / 6' : `Badges ${save.badges.length} of ${BADGE_IDS.length} · Endings ${save.endings.length} of 6`}</span></button>
       <div class="any-school">Any grad school. This one happens to be UGA.</div>

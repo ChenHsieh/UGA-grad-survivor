@@ -76,7 +76,7 @@ function computeBadge(track, finalBars) {
 }
 
 // ── The narrator: a fifth-year in your lab, unnamed ─────────────────
-const NARRATOR = 'Fifth-year';
+const NARRATOR = 'A fifth-year';
 const NARRATOR_INTRO = 'Ten semesters. Keep four bars above zero. At the end I will tell you what kind of grad student you are.';
 const NARRATOR_SEM = {
   3: 'Second year. Nobody warned me either.',
