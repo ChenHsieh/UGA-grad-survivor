@@ -10,8 +10,7 @@ const STAT_DEFS = [
 ];
 const STAT_NAMES = { mind: 'Mind', body: 'Body', wallet: 'Wallet', bonds: 'Friends', research: 'Research', network: 'Contacts' };
 // Plain words for a few card categories.
-const TAG_LABELS = { 'Cruel': 'Unfair', 'Black Swan': 'Out of Nowhere', 'Privilege': 'Uneven Ground', 'MILESTONE': 'Checkpoint', 'Milestone': 'The Program',
-  'Big Mood': 'Everyday', 'Existential Event': 'Self-Doubt', 'Human Existence': 'Everyday', 'Identity Crisis': 'Self-Doubt' };
+const TAG_LABELS = { 'Cruel': 'Unfair', 'Black Swan': 'Out of Nowhere', 'Privilege': 'Uneven Ground', 'MILESTONE': 'Checkpoint', 'Milestone': 'The Program' };
 const DANGER = 20;   // at or below: red, and Wallet/Friends start draining Mind and Body
 const WARN = 35;
 
