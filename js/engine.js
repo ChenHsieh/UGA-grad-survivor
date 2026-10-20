@@ -396,7 +396,8 @@ function continueToPI() {
   gameState.phase = 'pi_selection';
   menuIndex = 0;
   render();
-  setTimeout(() => highlightArchetype(menuIndex), 50);
+  // Keyboard users get the first advisor highlighted; touch users get a plain list with nothing pre-chosen.
+  if (typeof lastPointerType === 'undefined' || lastPointerType !== 'touch') setTimeout(() => highlightArchetype(menuIndex), 50);
 }
 
 // PI SELECTION

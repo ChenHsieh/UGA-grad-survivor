@@ -172,7 +172,7 @@ function renderPISelection() {
   const unlocked = save.unlockedPIs || ['micromanager', 'ghost', 'mentor', 'new_pi'];
   let html = `<div class="pick-screen">
     <h1 class="screen-title">Pick your advisor</h1>
-    <p class="screen-sub">Semester 1 is over, so now you pick the lab you stay in. Your advisor changes how fast Research grows and which costs hit you harder, from now until you graduate. Greyed-out advisors open after certain endings.</p>`;
+    <p class="screen-sub">Your advisor changes how fast Research grows and which costs hit you harder, until you graduate. Greyed-out advisors open after certain endings.</p>`;
   pis.forEach(([key, data]) => {
     const locked = !unlocked.includes(key);
     const hint = PI_UNLOCK_HINTS[key] || 'Opens later';
@@ -373,7 +373,7 @@ function renderPlay() {
     </div>
     <div class="card-container">
       <div class="card-ghost"></div>
-      ${gameState.strip ? `<button type="button" class="strip" id="strip" onclick="dismissStrip()"><span class="strip-sem">Semester ${gameState.strip.sem} <span class="strip-of">of 10</span></span><span class="strip-ctx">${SEM_LABELS[gameState.strip.sem] || ''}. ${semContext(gameState.strip.sem)}</span><span class="strip-narr">${narr(NARRATOR_SEM[gameState.strip.sem] || '')}</span><span class="strip-skip">Tap to skip</span></button>` : ''}
+      ${gameState.strip ? `<button type="button" class="strip" id="strip" onclick="dismissStrip()"><span class="strip-sem">Semester ${gameState.strip.sem} <span class="strip-of">of 10</span></span><span class="strip-ctx">${SEM_LABELS[gameState.strip.sem] || ''}. ${semContext(gameState.strip.sem)}</span><span class="strip-narr">${narr(NARRATOR_SEM[gameState.strip.sem] || '')}</span><span class="strip-skip">Tap to continue</span></button>` : ''}
       <div class="card" id="card">
         <div class="card-tag">${escapeText(speakerFor(card))}</div>
         <div class="card-title">${card.title}</div>
@@ -601,7 +601,7 @@ function renderEndingGrid() {
       ? `<div class="ending-slot unlocked ${now ? 'now' : ''}"><div class="slot-emoji">${endingIcon(e.id)}</div><div class="slot-name">${e.name}</div></div>`
       : `<div class="ending-slot locked"><div class="slot-lock">?</div><div class="slot-name">Not yet</div></div>`;
   }).join('')}</div>
-  <div class="run-meta">${save.totalRuns <= 1 ? 'Next run you choose who to play. ' : ''}${save.archetypes.length} of 8 characters open.</div>`;
+  <div class="run-meta">${save.totalRuns <= 1 ? 'The next run deals a random character. To pick one yourself, use “Choose who to play instead” on the title screen. ' : ''}${save.archetypes.length} of 8 characters open.</div>`;
 }
 
 // ── Render ────────────────────────────────────────────────────────
@@ -641,7 +641,6 @@ function render() {
     if (body) body.classList.toggle('overflows', body.scrollHeight > body.clientHeight + 4);
     // Change numbers play once, then leave, so they cannot replay later.
     app.querySelectorAll('.float').forEach(el => el.addEventListener('animationend', () => el.remove()));
-    if (gameState.strip) stripTimer = setTimeout(dismissStrip, 1200);
   }
   if (phase === 'ending' && gameState.badgeSeen) paintBadgePreview();
   persistRun();

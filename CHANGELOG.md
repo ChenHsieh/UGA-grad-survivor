@@ -180,3 +180,10 @@ A hidden card layer: personal journal entries that surface based on accumulated 
 Every run, win or loss, now ends on one of 20 hand-written badges, built from the bar you protected and the bar you let go. A reveal screen comes first, then the ending. "Save image" draws the badge as a 1080 x 1350 picture with no card text and no names; the share line is one sentence, and each badge has a link (`/r/<badge>/`) that previews as that badge.
 
 A fifth-year in your lab narrates: a promise on the first screen, one line at each semester change, one at the reveal. Cards name who is talking instead of a category. "Begin" deals a character and an advisor face-up for two seconds; "Choose who to play instead" keeps the full list. Card text is capped at 25 words with every number kept, and non-checkpoint semester changes are a 1.2 second strip you can tap away. The game's own name sits top-left on every screen and opens the title menu. The title screen has a Transcript shelf (badges, endings, characters, advisors). At 320 px the bars show icons and numbers. Old saves load unchanged and start with no badges.
+
+---
+
+## v0.13 — Start screen, advisor and timeline fixes
+2026-10-20
+
+The screen after Begin no longer disappears after two seconds: it shows your character (what it changes, the starting bars) and says the advisor is chosen after semester 1, with a Start button. The advisor list lost its unexplained "dealt" tag; you pick the advisor yourself. Cards no longer say things the game cannot make true: "3 years left" in semester 1, "18 months of work" in semester 3, "It is March" in fall, a qualifying exam "10 weeks away" a year ahead, and no card mentions your advisor or committee before semester 2. Callback cards wait a few semesters after the card that set them. The semester strip waits for a tap, and the Start semester button stays on screen on small phones. Old saves load unchanged. `node test/timeline.test.mjs` checks every card against the semester it can appear in; `notes/FLOW.md` describes the real flow.
