@@ -80,7 +80,7 @@ function setLean(side, source) {
       leanCount++;
       const any = Object.keys(fx).length;
       const tip = !any ? 'This answer moves nothing you can see.'
-        : (save.totalRuns <= 1 && gameState.totalCards < 8) ? 'Dots show which bars move. Bigger dot, bigger change.'
+        : (save.totalRuns <= 3 && gameState.totalCards < 2) ? 'Dots show which bars move. Bigger dot, bigger change.'
         : null;
       const how = source === 'drag' ? 'Let go to choose.' : source === 'tap' ? 'Tap again to choose.' : source === 'key' ? 'Press again to choose.' : '';
       news.innerHTML = `<span class="teach">${tip || how || 'Click to choose.'}</span>`;
@@ -224,6 +224,11 @@ document.addEventListener('keydown', function(e) {
     return;
   }
 
+  if (phase === 'deal') {
+    if (key === ' ' || key === 'Enter') { e.preventDefault(); startDealt(); }
+    return;
+  }
+
   if (phase === 'archetype' || phase === 'pi_selection') {
     const selectable = phase === 'archetype' ? getSelectableArchetypes() : getSelectablePIs();
     if (key === 'ArrowUp' || key === 'w' || key === 'W') {
@@ -253,6 +258,6 @@ document.addEventListener('keydown', function(e) {
   }
 
   if (phase === 'ending') {
-    if (key === ' ' || key === 'Enter') { e.preventDefault(); beginGame(); }
+    if (key === ' ' || key === 'Enter') { e.preventDefault(); if (gameState.badgeSeen) beginGame(); else seeEnding(); }
   }
 });
