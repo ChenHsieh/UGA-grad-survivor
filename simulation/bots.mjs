@@ -12,7 +12,7 @@ function makeGame(seed) {
   const ctx = { console, Math: Object.create(Math), JSON, localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } } };
   ctx.Math.random = rand;
   vm.createContext(ctx);
-  for (const f of ['archetypes','pi-data','cards-phase1','cards-phase2','cards-phase3','cards-universal','cards-callback','cards-milestone','cards-exclusive'])
+  for (const f of ['archetypes','pi-data','cards-phase1','cards-phase2','cards-phase3','cards-universal','cards-callback','cards-milestone','cards-exclusive','badges'])
     vm.runInContext(fs.readFileSync(`${dir}/js/data/${f}.js`, 'utf8'), ctx);
   vm.runInContext(fs.readFileSync(`${dir}/js/engine.js`, 'utf8'), ctx);
   vm.runInContext(`function render(){ if (gameState.phase==='play' && !gameState.currentCard) gameState.currentCard = drawCard(); } function highlightArchetype(){} function setTimeout(){}`, ctx);

@@ -40,18 +40,63 @@ function totalDeltas(result) {
   return total;
 }
 
+const PI_UNLOCK_HINTS = { exploiter: 'Opens once a run ends with a master’s', dynasty: 'Opens once you defend' };
+const ARCH_UNLOCK_HINTS = {
+  double_agent:   'Opens once you reach semester 7',
+  gym_bro:        'Opens once a run ends in the hospital',
+  neurodivergent: 'Opens once a run ends burnt out',
+};
+const GAME_URL = 'https://chenhsieh.github.io/UGA-grad-survivor/';
+let dealTimer = null, stripTimer = null;
+
+function narr(text) { return `<span class="narr">${NARRATOR}:</span> ${text}`; }
+
+function brandHtml(plain) {
+  const inner = `<span class="brand-mark">${endingIcon('defended')}</span><span class="brand-name">Grad Survivor</span>`;
+  return plain ? `<span class="brand">${inner}</span>`
+    : `<button type="button" class="brand" onclick="goTitle()" aria-label="Grad Survivor: back to the title menu">${inner}</button>`;
+}
+
+// The brand in the top-left corner opens the title menu; a run in progress waits behind "Continue".
+function goTitle() {
+  clearTimeout(dealTimer); clearTimeout(stripTimer);
+  if (helpVisible) closeHelp();
+  gameState.phase = 'title';
+  render();
+}
+
 function zoneOf(v) { return v <= DANGER ? 'danger' : v <= WARN ? 'warn' : 'ok'; }
 
 // ── Title ──────────────────────────────────────────────────────────
 
+function pickRandom(list) { return list[Math.floor(Math.random() * list.length)]; }
+
+// "Begin" deals a character and an advisor face-up for a moment, then card 1.
+// The very first run is always the Overachiever, to teach the game; the advisor is still dealt.
 function beginGame() {
-  if (!save.totalRuns) { selectArchetype('overachiever'); return; }
+  const advisor = pickRandom(getSelectablePIs());
+  const arch = save.totalRuns ? pickRandom(getSelectableArchetypes()) : 'overachiever';
+  selectArchetype(arch, { deal: true, dealtPI: advisor });
+  render();
+}
+
+function startDealt() {
+  clearTimeout(dealTimer);
+  if (gameState.phase !== 'deal') return;
+  gameState.phase = 'play';
+  render();
+}
+
+// "Choose instead": the full list of characters.
+function chooseInstead() {
   gameState.phase = 'archetype';
   gameState.ending = null;
   gameState.currentCard = null;
   menuIndex = Math.max(0, getSelectableArchetypes().indexOf(save.lastArchetype));
   render();
 }
+
+function openTranscript() { gameState.phase = 'transcript'; render(); }
 
 function renderTitle() {
   const returning = save.totalRuns > 0;
@@ -61,22 +106,33 @@ function renderTitle() {
     <div class="title-screen">
       <div class="title-art">${endingIcon('defended')}</div>
       <h1>UGA Grad <em>Survivor</em></h1>
-      <p class="tagline">Ten semesters. Every card has two answers.<br>Keep four bars above zero, and do enough research to defend.</p>
+      <p class="tagline">Ten semesters, two answers per card. At the end a badge says what kind of grad student you were.<br>Keep four bars above zero and do enough research to defend.</p>
       ${run ? `<button class="begin-btn" onclick="resumeRun()">Continue<span class="btn-sub">${runLine}</span></button>
       <button class="new-run-btn" onclick="beginGame()">New run</button>`
-        : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}</button>`}
-      ${returning ? `<div class="title-meta">${save.endings.length} of 6 endings found · ${save.totalRuns} ${save.totalRuns === 1 ? 'run' : 'runs'}</div>` : ''}
+        : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}<span class="btn-sub">A character and an advisor are dealt</span></button>`}
+      <button class="link-btn" onclick="chooseInstead()">Choose who to play instead</button>
+      <button class="new-run-btn transcript-btn" onclick="openTranscript()">Transcript<span class="btn-sub">Badges ${save.badges.length} of ${BADGE_IDS.length} · Endings ${save.endings.length} of 6</span></button>
+      <div class="any-school">Any grad school. This one happens to be UGA.</div>
       <div class="credits">by Chen Hsieh, a UGA bioinformatics PhD student</div>
+      <a class="lab-link" href="https://chenhsieh.github.io/play-lab/">More games at Play Lab</a>
     </div>`;
+}
+
+function renderDeal() {
+  const a = ARCHETYPE_DATA[gameState.archetype], pi = PI_DATA[gameState.dealtPI];
+  const hand = (kind, icon, name, blurb) => `<div class="deal-card"><div class="deal-kind">${kind}</div><div class="deal-icon">${icon}</div><div class="deal-name">${name}</div><div class="deal-blurb">${blurb}</div></div>`;
+  return `<div class="deal-screen" onclick="startDealt()">
+    <div class="deal-label">Your hand</div>
+    <div class="deal-cards">
+      ${hand('You', archIcon(gameState.archetype), a.name, a.blurb.split('. ')[0].replace(/\.$/, '') + '.')}
+      ${pi ? hand('Advisor', piIcon(gameState.dealtPI), pi.name, pi.blurb.split('. ')[0].replace(/\.$/, '') + '.') : ''}
+    </div>
+    <div class="deal-sub">Tap to start. You pick your advisor for real after semester 1.</div>
+  </div>`;
 }
 
 // ── Picking a path and an advisor ─────────────────────────────────
 
-const ARCH_UNLOCK_HINTS = {
-  double_agent:   'Opens once you reach semester 7',
-  gym_bro:        'Opens once a run ends in the hospital',
-  neurodivergent: 'Opens once a run ends burnt out',
-};
 
 function miniStats(s) {
   return ['mind', 'body', 'wallet', 'bonds', 'research'].map(k =>
@@ -117,12 +173,13 @@ function renderPISelection() {
     <p class="screen-sub">You will work for them until you graduate.</p>`;
   pis.forEach(([key, data]) => {
     const locked = !unlocked.includes(key);
-    const hint = key === 'exploiter' ? 'Opens once a run ends with a master’s' : key === 'dynasty' ? 'Opens once you defend' : 'Opens later';
+    const hint = PI_UNLOCK_HINTS[key] || 'Opens later';
+    const dealt = key === gameState.dealtPI;
     html += `
-      <button type="button" class="pick-card ${locked ? 'locked' : ''}" ${locked ? 'disabled' : `onclick="selectPI('${key}')"`}>
+      <button type="button" class="pick-card ${locked ? 'locked' : ''} ${dealt ? 'selected' : ''}" ${locked ? 'disabled' : `onclick="selectPI('${key}')"`}>
         <span class="pick-icon">${piIcon(key)}</span>
         <span class="pick-text">
-          <span class="pick-name">${data.name}</span>
+          <span class="pick-name">${data.name}${dealt ? ' <span class="dealt-tag">dealt</span>' : ''}</span>
           <span class="pick-blurb">${locked ? hint : data.blurb}</span>
         </span>
       </button>`;
@@ -175,28 +232,32 @@ function renderRotationComplete() {
   </div>`;
 }
 
+const SEM_CONTEXT = {
+  3: 'The exam is out there somewhere.',
+  4: 'The qualifying exam is this term.',
+  5: () => gameState.memory.includes('quals_passed') ? 'Past the exam. The project is yours now.' : 'The exam retake is this term.',
+  6: () => gameState.memory.includes('quals_passed') ? 'Committee season.' : 'Last chance at the exam. A third miss ends the PhD with a master’s.',
+  7: 'Strong opinions about the lounge coffee.',
+  8: 'The end is almost visible.',
+  9: 'One more push.',
+  10: 'Final semester. Defense or bust.',
+};
+function semContext(n) { const c = SEM_CONTEXT[n]; return typeof c === 'function' ? c() : (c || ''); }
+
+// The full stop after a checkpoint: you see what the checkpoint did before the next semester starts.
 function renderSemesterAdvance() {
   const done = gameState.semester;
   const next = gameState.nextSemester;
-  const flavors = {
-    3: "First year is behind you. The qualifying exam is out there, somewhere in the fog.",
-    4: "The grind is real. Your brain hurts in a productive way. The exam is this semester.",
-    5: gameState.memory.includes('quals_passed') ? "Past the exam. The project is yours now. Nobody tells you what to do next." : "The exam is still ahead of you. The retake is this semester.",
-    6: gameState.memory.includes('quals_passed') ? "Committee season. Everyone wants a progress report. You have a PowerPoint." : "Last chance at the exam. A third miss ends the PhD with a master’s.",
-    7: "You've been here long enough to have strong opinions about the grad lounge coffee.",
-    8: "The end is theoretically visible. You've written more than you ever thought possible.",
-    9: "One more push. Defense is almost within reach.",
-    10: "Final semester. Defense or bust. No more semesters after this one."
-  };
   return `<div class="semester-advance-screen">
     <div class="sem-advance-badge">Semester ${done} done</div>
     <div class="sem-advance-title">Semester ${next}</div>
     <div class="sem-advance-next-label">${SEM_LABELS[next] || ''}</div>
-    <div class="sem-advance-flavor">${flavors[next] || ''}</div>
+    <div class="sem-advance-flavor">${semContext(next)}</div>
     ${lastLine()}
     ${statRow(gameState.st)}
     ${gateLine()}
-    <div class="sem-advance-cost">${next >= 6 ? 'Starting the semester costs Wallet −1 (rent goes up) and Friends −1 (late PhD years are lonely).' : 'Starting the semester costs Wallet −1: rent goes up.'}</div>
+    <div class="sem-advance-cost">${next >= 6 ? 'Starting the semester costs Wallet −1 (rent) and Friends −1 (late PhD years are lonely).' : 'Starting the semester costs Wallet −1: rent goes up.'}</div>
+    <div class="narr-line">${narr(NARRATOR_SEM[next] || '')}</div>
     <button class="sem-advance-btn" onclick="continueSemester()">Start semester ${next}</button>
   </div>`;
 }
@@ -230,6 +291,7 @@ function renderPlay() {
   const shownFrom = fresh ? result.before : st;
   const total = result ? totalDeltas(result) : {};
 
+  const gateCard = card.milestone && gateNeed(card.id) !== undefined;
   const meter = s => {
     const v = st[s.key];
     const float = fresh && total[s.key] ? `<span class="float ${total[s.key] > 0 ? 'up' : 'down'}">${signed(total[s.key])}</span>` : '';
@@ -245,7 +307,7 @@ function renderPlay() {
   const r = st.research;
   const rFloat = fresh && total.research ? `<span class="float r-float ${total.research > 0 ? 'up' : 'down'}">${signed(total.research)}</span>` : '';
   const gateNow = g.sem === gameState.semester;
-  const research = `<div class="research ${r < g.need ? (gateNow ? 'short now' : 'short') : 'met'}" data-stat="research">
+  const research = `<div class="research ${r < g.need ? (gateNow ? 'short now' : 'short') : 'met'} ${gateCard ? 'on-gate' : ''}" data-stat="research">
     <span class="dot" aria-hidden="true"></span>
     <div class="research-top">${statIcon('research')}<span class="stat-name">Research</span><span class="stat-value">${r}</span>${rFloat}
       <span class="gate-label">${g.name}, sem ${g.sem}: needs ${g.need}</span></div>
@@ -260,8 +322,7 @@ function renderPlay() {
   else if (result) line1 = `${verdict ? `<span class="verdict ${result.verdict.passed ? 'ok' : 'bad'}">${verdict}</span>` : '<span class="last">Last:</span>'} ${formatDeltas(total) || 'no change'}`;
   else line1 = '';
   let line2 = dangerMessage();
-  const a = ARCHETYPE_DATA[gameState.archetype];
-  const intro = !line2 && gameState.totalCards === 0 ? `You are ${a.name}: ${a.blurb.split('. ')[0].replace(/\.$/, '').replace(/^./, c => c.toLowerCase())}.` : '';
+  const intro = !line2 && gameState.totalCards === 0 ? narr(NARRATOR_INTRO) : '';
 
   let milestoneBox = '';
   const need = gateNeed(card.id);
@@ -296,11 +357,12 @@ function renderPlay() {
 
   return `<div class="play-screen">
     <div class="topbar">
-      <div class="sem"><strong>Semester ${gameState.semester}</strong> of 10<span class="phase">${SEM_LABELS[gameState.semester] || ''}</span></div>
+      ${brandHtml()}
       <div class="who">${ARCHETYPE_DATA[gameState.archetype].name}${gameState.piType ? `<br>${PI_DATA[gameState.piType].name}` : ''}</div>
       <button class="help-btn" onclick="showHelp()" aria-label="How to play">?</button>
     </div>
     <div class="meters">
+      <div class="sem-row"><strong>Semester ${gameState.semester}</strong> of 10<span class="phase">${SEM_LABELS[gameState.semester] || ''}</span></div>
       <div class="stats-bar">${STAT_DEFS.map(meter).join('')}</div>
       ${research}
     </div>
@@ -310,8 +372,9 @@ function renderPlay() {
     </div>
     <div class="card-container">
       <div class="card-ghost"></div>
+      ${gameState.strip ? `<button type="button" class="strip" id="strip" onclick="dismissStrip()"><span class="strip-sem">Semester ${gameState.strip.sem} <span class="strip-of">of 10</span></span><span class="strip-ctx">${SEM_LABELS[gameState.strip.sem] || ''}. ${semContext(gameState.strip.sem)}</span><span class="strip-narr">${narr(NARRATOR_SEM[gameState.strip.sem] || '')}</span><span class="strip-skip">Tap to skip</span></button>` : ''}
       <div class="card" id="card">
-        <div class="card-tag">${escapeText(TAG_LABELS[card.tag] || card.tag)}</div>
+        <div class="card-tag">${escapeText(speakerFor(card))}</div>
         <div class="card-title">${card.title}</div>
         ${milestoneBox}
         <div class="card-body" id="cardBody">${card.body}</div>
@@ -323,6 +386,97 @@ function renderPlay() {
       </div>
     </div>
     <div class="controls-hint">← → to lean, again to choose</div>
+  </div>`;
+}
+
+// ── Badge reveal: every run ends here first, wins and losses alike ──
+
+function endingWords(ending) { return ENDING_WORDS[ending] || 'Finished'; }
+
+function badgeMark(b) {
+  return `<div class="badge-ring"><span class="badge-keep">${statIcon(b.keep)}</span><span class="badge-spend" title="Spent: ${BADGE_BAR_NAMES[b.spend]}">${statIcon(b.spend)}</span></div>`;
+}
+
+function renderBadgeReveal() {
+  recordRun();
+  const b = gameState.badge, d = BADGES[b.id];
+  const reveal = NARRATOR_REVEAL[gameState.ending] || NARRATOR_REVEAL.default;
+  return `<div class="reveal-screen">
+    <div class="narr-line">${narr(reveal)}</div>
+    ${badgeMark(b)}
+    <div class="badge-name">${d.name}</div>
+    <div class="badge-line">${d.line}</div>
+    <div class="chips">${d.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
+    <div class="badge-kept">Kept ${BADGE_BAR_NAMES[b.keep]} · spent ${BADGE_BAR_NAMES[b.spend]}</div>
+    <div class="badge-ending">${endingWords(gameState.ending)} · semester ${gameState.semester}</div>
+    <button class="play-again-btn reveal-btn" onclick="seeEnding()">See how it ended</button>
+  </div>`;
+}
+
+function seeEnding() { gameState.badgeSeen = true; render(); }
+
+function badgeSpec() {
+  const b = gameState.badge;
+  return { id: b.id, keep: b.keep, spend: b.spend, avg: b.avg, ending: gameState.ending, semester: gameState.semester };
+}
+
+async function paintBadgePreview() {
+  const holder = document.getElementById('badgePreview');
+  if (!holder || !gameState.badge) return;
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const c = document.createElement('canvas');
+    await drawBadgeCard(c, badgeSpec());
+    c.className = 'badge-canvas';
+    c.setAttribute('role', 'img');
+    c.setAttribute('aria-label', `Badge card: ${BADGES[gameState.badge.id].name}`);
+    holder.replaceChildren(c);
+  } catch (e) { holder.textContent = ''; }
+}
+
+async function saveBadgeImage() {
+  const feedback = document.getElementById('shareFeedback');
+  try {
+    const c = document.createElement('canvas');
+    await drawBadgeCard(c, badgeSpec());
+    const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+    const name = `grad-survivor-${gameState.badge.id}.png`;
+    const file = new File([blob], name, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    if (feedback) { feedback.textContent = 'Saved.'; setTimeout(() => { feedback.textContent = ''; }, 3000); }
+  } catch (e) { if (feedback) feedback.textContent = 'Could not make the image.'; }
+}
+
+// ── Transcript: everything there is to find ───────────────────────
+
+function renderTranscript() {
+  const tile = (icon, name, sub, found) => `<div class="tr-tile ${found ? 'found' : 'locked'}"><span class="tr-icon">${icon}</span><span class="tr-name">${found ? name : '???'}</span><span class="tr-sub">${sub}</span></div>`;
+  const badgeTiles = BADGE_IDS.map(id => {
+    const [keep] = id.split('-'), found = save.badges.includes(id);
+    return tile(statIcon(keep), BADGES[id].name, found ? `Kept ${BADGE_BAR_NAMES[keep]}, spent ${BADGE_BAR_NAMES[id.split('-')[1]]}` : badgeHint(id), found);
+  }).join('');
+  const endings = [['defended', 'Defended', 'Defend in semester 10'], ['mastered_out', 'Master’s', 'Leave with a master’s'], ['burnt_out', 'Burnt out', 'Let Mind hit 0'],
+    ['hospitalized', 'Hospitalized', 'Let Body hit 0'], ['broke', 'Broke', 'Let Wallet hit 0'], ['disappeared', 'Disappeared', 'Let Friends hit 0']];
+  const endingTiles = endings.map(([id, n, hint]) => tile(endingIcon(id), n, hint, save.endings.includes(id))).join('');
+  const archTiles = Object.entries(ARCHETYPE_DATA).map(([k, d]) => { const f = save.archetypes.includes(k); return tile(archIcon(k), d.name, f ? d.perk : (ARCH_UNLOCK_HINTS[k] || 'Opens later'), f); }).join('');
+  const unlocked = save.unlockedPIs || [];
+  const piTiles = Object.entries(PI_DATA).map(([k, d]) => { const f = unlocked.includes(k); return tile(piIcon(k), d.name, f ? d.blurb.split('. ')[0].replace(/\.$/, '') : (PI_UNLOCK_HINTS[k] || 'Opens later'), f); }).join('');
+  const sec = (title, n, of, tiles) => `<div class="share-label">${title} ${n} of ${of}</div><div class="tr-grid">${tiles}</div>`;
+  return `<div class="transcript">
+    <h1 class="screen-title">Your transcript</h1>
+    <p class="screen-sub">A locked tile tells you how to open it.</p>
+    ${sec('Badges', save.badges.length, BADGE_IDS.length, badgeTiles)}
+    ${sec('Endings', save.endings.length, 6, endingTiles)}
+    ${sec('Characters', save.archetypes.length, 8, archTiles)}
+    ${sec('Advisors', unlocked.length, 6, piTiles)}
+    <button class="play-again-btn" onclick="goTitle()">Back</button>
   </div>`;
 }
 
@@ -400,7 +554,9 @@ function renderEnding() {
   const takeBackBtn = canTakeBack()
     ? `<button class="takeback-btn" onclick="takeBack()">Take back that last choice<span>Once per run</span></button>` : '';
 
+  const bd = BADGES[gameState.badge.id];
   return `<div class="ending-screen">
+    <div class="ending-badge">${statIcon(gameState.badge.keep)} <strong>${bd.name}</strong></div>
     <div class="ending-art">${endingIcon(ending)}</div>
     <div class="ending-title">${d.title}</div>
     <div class="ending-sub">Semester ${sem} · ${runInfo}</div>
@@ -416,12 +572,16 @@ function renderEnding() {
     </div>
     ${renderEndingGrid()}
     <div class="share-section">
-      <div class="share-label">Share your run</div>
-      <textarea id="shareText" class="share-textarea" rows="3" onclick="this.select()">${shareLine(ending, sem, gameState.network)}\nhttps://chenhsieh.github.io/UGA-grad-survivor/</textarea>
+      <div class="share-label">Your badge</div>
+      <div id="badgePreview" class="badge-preview"></div>
+      <button class="share-btn" onclick="saveBadgeImage()">Save image</button>
+      <div class="share-label share-gap">Share your run</div>
+      <textarea id="shareText" class="share-textarea" rows="3" onclick="this.select()">${shareLine()}\n${GAME_URL}r/${gameState.badge.id}/</textarea>
       <button class="share-btn" onclick="shareRun()">Share</button>
       <div id="shareFeedback" class="share-feedback"></div>
     </div>
     <div class="footer-credit">Made by a UGA PhD student · chenhsieh.xyz</div>
+    <button class="link-btn" onclick="openTranscript()">Transcript</button>
   </div>`;
 }
 
@@ -444,17 +604,31 @@ function renderEndingGrid() {
 
 // ── Render ────────────────────────────────────────────────────────
 
+function dismissStrip() {
+  clearTimeout(stripTimer);
+  gameState.strip = null;
+  document.getElementById('strip')?.remove();
+  persistRun();
+}
+
 function render() {
   const app = document.getElementById('app');
   resetLean();
+  clearTimeout(dealTimer); clearTimeout(stripTimer);
   const phase = gameState.phase;
-  if (phase === 'title') app.innerHTML = renderTitle();
-  else if (phase === 'archetype') app.innerHTML = renderArchetype();
-  else if (phase === 'pi_selection') app.innerHTML = renderPISelection();
-  else if (phase === 'rotation_complete') app.innerHTML = renderRotationComplete();
-  else if (phase === 'semester_advance') app.innerHTML = renderSemesterAdvance();
-  else if (phase === 'play') app.innerHTML = renderPlay();
-  else if (phase === 'ending') app.innerHTML = renderEnding();
+  let html = '';
+  if (phase === 'title') html = renderTitle();
+  else if (phase === 'archetype') html = renderArchetype();
+  else if (phase === 'pi_selection') html = renderPISelection();
+  else if (phase === 'rotation_complete') html = renderRotationComplete();
+  else if (phase === 'semester_advance') html = renderSemesterAdvance();
+  else if (phase === 'deal') html = renderDeal();
+  else if (phase === 'transcript') html = renderTranscript();
+  else if (phase === 'play') html = renderPlay();
+  else if (phase === 'ending') html = gameState.badgeSeen ? renderEnding() : renderBadgeReveal();
+  // Every screen carries the game's own name in the top-left corner (the play screen draws its own bar).
+  if (phase !== 'play') html = `<div class="brandbar">${brandHtml(phase === 'title')}</div>` + html;
+  app.innerHTML = html;
   document.body.classList.toggle('in-play', phase === 'play');
   if (phase === 'play') {
     bindCard();
@@ -465,12 +639,15 @@ function render() {
     if (body) body.classList.toggle('overflows', body.scrollHeight > body.clientHeight + 4);
     // Change numbers play once, then leave, so they cannot replay later.
     app.querySelectorAll('.float').forEach(el => el.addEventListener('animationend', () => el.remove()));
+    if (gameState.strip) stripTimer = setTimeout(dismissStrip, 1200);
   }
+  if (phase === 'deal') dealTimer = setTimeout(startDealt, 2000);
+  if (phase === 'ending' && gameState.badgeSeen) paintBadgePreview();
   persistRun();
   if (renderedPhase !== phase) {
     window.scrollTo(0, 0);
-    if (phase !== 'title' && phase !== 'play') {
-      app.querySelector('.pick-card.selected, .pick-card:not(.locked), .sem-advance-btn, .takeback-btn, .play-again-btn')?.focus({ preventScroll: true });
+    if (phase !== 'title' && phase !== 'play' && phase !== 'deal') {
+      app.querySelector('.pick-card.selected, .pick-card:not(.locked), .sem-advance-btn, .takeback-btn, .play-again-btn, .reveal-btn')?.focus({ preventScroll: true });
     }
   }
   renderedPhase = phase;
@@ -524,10 +701,10 @@ function showHelp() {
   overlay.querySelector('.help-content').focus();
 }
 
-// A short result line with no card text in it: what happened, when, and how many career contacts.
-function shareLine(ending, sem, contacts) {
-  const what = { defended: 'Defended', mastered_out: 'Left with a master\'s', burnt_out: 'Burnt out', hospitalized: 'Ended in hospital', broke: 'Ran out of money', disappeared: 'Stopped showing up' }[ending] || 'Finished';
-  return `UGA Grad Survivor: ${what} in semester ${sem}, ${contacts} career ${contacts === 1 ? 'contact' : 'contacts'}.`;
+// One line, no card text and no names: who you were, how it ended, how many endings found.
+function shareLine() {
+  const b = BADGES[gameState.badge.id];
+  return `I'm ${b.name}. ${endingWords(gameState.ending)} in semester ${gameState.semester}, ${save.endings.length} of 6 endings found. Could you defend?`;
 }
 
 // Web Share where the browser has it, otherwise copy the same text.

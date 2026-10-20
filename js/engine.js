@@ -29,10 +29,11 @@ function gateNeed(id) {
   return GATE_NEED[id];
 }
 
-let save = { version: 3, endings: [], archetypes: ['overachiever', 'vibe_coder', 'fun_haver', 'global_student', 'biologist'], unlockedPIs: ['micromanager', 'ghost', 'mentor', 'new_pi'], totalRuns: 0, totalDeaths: 0, bestSemester: 0 };
+let save = { version: 3, badges: [], endings: [], archetypes: ['overachiever', 'vibe_coder', 'fun_haver', 'global_student', 'biologist'], unlockedPIs: ['micromanager', 'ghost', 'mentor', 'new_pi'], totalRuns: 0, totalDeaths: 0, bestSemester: 0 };
 let gameState = {
   phase: 'title', archetype: null, piType: null, st: {mind:50, body:50, wallet:50, bonds:50, research:50}, semester: 1, cardCount: 0,
-  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null, lastConsequence: null
+  totalCards: 0, network: 0, qualsAttempts: 0, memory: [], currentCard: null, ending: null, cause: null, nextMilestone: null, nextSemester: null, lastConsequence: null,
+  track: null, dealtPI: null, badge: null, badgeSeen: false
 };
 
 function getPhase(semester) {
@@ -44,13 +45,21 @@ function getPhase(semester) {
 function loadSave() {
   try {
     const loaded = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (loaded && loaded.version >= 3) { save = loaded; }
+    if (loaded && loaded.version >= 3) {
+      save = loaded;
+      // Fields added after v3 are filled in, never reset: an older save keeps everything it had.
+      if (!Array.isArray(save.badges)) save.badges = [];
+    }
     // v2 or older saves get reset (new archetypes, research stat, PI system)
   } catch (e) {}
 }
 function saveSave() { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
 
-function selectArchetype(arch) {
+function newTrack() { return { n: 0, sum: { mind: 0, body: 0, wallet: 0, bonds: 0, research: 0 } }; }
+
+// opts.deal: the run was dealt (character and advisor face-up for a moment before card 1).
+function selectArchetype(arch, opts) {
+  opts = opts || {};
   gameState.archetype = arch;
   const startStats = ARCHETYPE_DATA[arch].st;
   gameState.st = {...startStats};
@@ -68,10 +77,15 @@ function selectArchetype(arch) {
   gameState.nextMilestone = null;
   gameState.recorded = false;
   gameState.undoUsed = false;
+  gameState.track = newTrack();
+  gameState.dealtPI = opts.dealtPI || null;
+  gameState.badge = null;
+  gameState.badgeSeen = false;
   undoSnapshot = null;
-  gameState.phase = 'play';
+  gameState.phase = opts.deal ? 'deal' : 'play';
   save.totalRuns++;
   saveSave();
+  try { localStorage.removeItem(RUN_KEY); } catch (e) {}
   startNextSemester();
   render();
 }
@@ -183,6 +197,12 @@ function choose(side) {
     // PI selection is handled by selectPI() function, not here
     return;
   }
+
+  gameState.strip = null;
+  // The bars as the player saw them before answering; the badge is built from these.
+  if (!gameState.track) gameState.track = newTrack();
+  gameState.track.n++;
+  BADGE_BARS.forEach(k => { gameState.track.sum[k] += gameState.st[k]; });
 
   beginConsequence(side === 'left' ? card.cL : card.cR);
   const perk = ARCHETYPE_DATA[gameState.archetype].rules;
@@ -316,8 +336,14 @@ function choose(side) {
       gameState.phase = 'ending'; gameState.ending = 'mastered_out'; gameState.cause = 'Time'; return render();
     }
     gameState.nextSemester = nextSem;
-    gameState.phase = 'semester_advance';
-    render();
+    // After a checkpoint the run stops so you can read what it did. Any other semester change is a
+    // short strip over the next card (tap to skip), and its costs join the last answer's change numbers.
+    if (card.milestone) {
+      gameState.phase = 'semester_advance';
+      render();
+    } else {
+      continueSemester(true);
+    }
     return;
   }
 
@@ -326,8 +352,8 @@ function choose(side) {
 }
 
 // Called from semester advance checkpoint screen
-function continueSemester() {
-  beginConsequence('Semester change');
+function continueSemester(asStrip) {
+  if (!asStrip || !gameState.lastConsequence) beginConsequence('Semester change');
   // Cost of living: -1 wallet each semester
   gameState.st.wallet = Math.max(0, gameState.st.wallet - 1);
   recordConsequenceStep('Cost of living');
@@ -343,6 +369,7 @@ function continueSemester() {
   gameState.cardCount = 0;
   startNextSemester();
   gameState.phase = 'play';
+  gameState.strip = asStrip ? { sem: gameState.semester } : null;
   gameState.currentCard = drawCard(); // drawCard() may override phase to pi_selection
   render();
 }
@@ -350,13 +377,15 @@ function continueSemester() {
 // Called from rotation_complete transition screen
 function continueToPI() {
   gameState.phase = 'pi_selection';
-  menuIndex = 0;
+  const dealt = typeof getSelectablePIs === 'function' ? getSelectablePIs().indexOf(gameState.dealtPI) : -1;
+  menuIndex = Math.max(0, dealt);
   render();
-  setTimeout(() => highlightArchetype(0), 50);
+  setTimeout(() => highlightArchetype(menuIndex), 50);
 }
 
 // PI SELECTION
 function selectPI(piKey) {
+  gameState.dealtPI = null;
   gameState.piType = piKey;
   gameState.cardCount = 0;
   gameState.semester++;
@@ -497,6 +526,9 @@ function recordRun() {
   if (gameState.recorded) return;
   gameState.recorded = true;
   const ending = gameState.ending;
+  gameState.badge = computeBadge(gameState.track, gameState.st);
+  if (!Array.isArray(save.badges)) save.badges = [];
+  if (!save.badges.includes(gameState.badge.id)) save.badges.push(gameState.badge.id);
   save.bestSemester = Math.max(save.bestSemester || 0, gameState.semester);
   if (ending !== 'defended') save.totalDeaths++;
   if (!save.endings.includes(ending)) save.endings.push(ending);
