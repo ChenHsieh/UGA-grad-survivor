@@ -63,3 +63,14 @@ Written 2026-10-20 from js/engine.js and js/ui.js, then checked by playing six f
 | Picking an advisor moves to semester 2 without the Wallet -1 rent cost or a strip | left as is; no balance change in this round |
 | Reloading on the start screen loses the dealt character (the run is only saved from the first card) | left as is; costs nothing but the deal |
 | The 5 Traditional Chinese runs show English cards and menus (only badges and the transcript are translated) | known and documented in the changelog |
+
+## Fresh-eyes review, 2026-10-20 (P1a62)
+
+| Found | Status |
+|---|---|
+| At 320x568 the two answers sat 26 px below the fold (the play screen had a 600 px minimum height) | fixed: under 640 px tall the screen fits; long card text scrolls inside the card |
+| Chinese mode showed English cards with no warning | fixed: a line under the toggle says only badges and the transcript are translated |
+| Narrator tag "Fifth-year:" read like a timeline label ("Fifth-year: Second year.") | now "A fifth-year:" |
+| Vibe-Coder and Biologist rules said "pipeline cards", a word no card shows | now "cards from The cluster" (the label on those 12 cards) |
+| The "Choose Your Advisor" milestone card (ms_rotation) is never shown; it only triggers the lab screen | left: the engine uses it as the trigger |
+| Career contacts appears only on the ending screen, never during play | left; needs a design call |
