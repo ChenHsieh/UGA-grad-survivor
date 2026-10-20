@@ -320,7 +320,7 @@ function renderPlay() {
   let line1;
   const verdict = verdictText(result);
   if (!result && gameState.totalCards === 0) line1 = `<span class="teach">${finePointer ? 'Drag the card, or click an answer.' : 'Drag the card, or tap an answer twice.'}</span>`;
-  else if (result) line1 = `${verdict ? `<span class="verdict ${result.verdict.passed ? 'ok' : 'bad'}">${verdict}</span>` : '<span class="last">Last:</span>'} ${formatDeltas(total) || 'no change'}`;
+  else if (result) line1 = `${verdict ? `<span class="verdict ${result.verdict.passed ? 'ok' : 'bad'}">${verdict}</span>` : '<span class="last">Last:</span>'} ${formatDeltas(total) || 'no change'}${total && total.network ? ` <span class="last">(career contacts: ${gameState.network})</span>` : ''}`;
   else line1 = '';
   let line2 = dangerMessage();
   const intro = !line2 && gameState.totalCards === 0 ? narr(NARRATOR_INTRO) : '';
@@ -367,7 +367,7 @@ function renderPlay() {
       <div class="stats-bar">${STAT_DEFS.map(meter).join('')}</div>
       ${research}
     </div>
-    <div class="news" aria-live="polite">
+    <div class="news${intro ? ' has-intro' : ''}" aria-live="polite">
       <div class="news-1" id="news1" data-base="${escapeText(line1)}">${line1}</div>
       <div class="news-2 ${line2 ? 'alert' : ''}">${line2 || intro}</div>
     </div>

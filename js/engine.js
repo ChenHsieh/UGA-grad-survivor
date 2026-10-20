@@ -411,17 +411,28 @@ function selectPI(piKey) {
   render();
 }
 
+const COMPUTE_TAGS = ['Computing', 'Pipeline', 'Pipeline Failure'];
+// Cards about computing or the cluster that carry another tag (checked by reading each card; the tags alone were only 12).
+const COMPUTE_IDS = ['pipeline_runs', 'data_breach', 'docker_refusal_postdoc', 'plant_path_collab', 'no_credit_collab', 'collab_exploit_pattern',
+  'hatch_hackathon', 'lab_ai_policy', 'ai_will_replace_us', 'ai_code_vs_purist', 'ai_coding_disclosure', 'bioinfo_vs_compbio',
+  'excel_bioinformatician', 'pipeline_callback', 'ai_methods', 'ai_detector', 'py_in_word', 'send_my_data'];
+function isComputeCard(card) {
+  if (!card) return false;
+  return COMPUTE_TAGS.includes(card.tag) || COMPUTE_IDS.includes(card.id);
+}
+
 function applyPerk(arch, stat, delta, card) {
   const perk = ARCHETYPE_DATA[arch]?.rules;
   const tag = card && card.tag ? card.tag : '';
-  const techTags = ['Pipeline Failure', 'Pipeline', 'Pipeline'];
+  // "The cluster" cards: the three computing tags, plus any card whose own text is about computing or the cluster.
+  const techCard = isComputeCard(card);
   const socialTags = ['Social', 'Human Existence', 'Athens Life', 'Social Drama', 'Lab Drama'];
   switch(arch) {
     case 'overachiever':
       // Post-choice effect handled in choose()
       break;
     case 'vibe_coder':
-      if (techTags.includes(tag) && delta > 0) return Math.floor(delta * perk.techGain);
+      if (techCard && delta > 0) return Math.floor(delta * perk.techGain);
       if (socialTags.includes(tag) && delta < 0) return Math.floor(delta * perk.socialLoss);
       break;
     case 'fun_haver':
@@ -432,7 +443,7 @@ function applyPerk(arch, stat, delta, card) {
       if (stat === 'bonds' && delta < 0) return Math.ceil(delta * perk.bondsLoss);
       break;
     case 'biologist':
-      if (stat === 'research' && delta < 0 && techTags.includes(tag)) {
+      if (stat === 'research' && delta < 0 && techCard) {
         if (gameState.st.bonds > perk.highBonds) return Math.ceil(delta * perk.supportedLoss);
         if (gameState.st.bonds < perk.lowBonds) return Math.floor(delta * perk.isolatedLoss);
       }

@@ -147,12 +147,13 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 .research.on-gate .gate-mark { width: 5px; top: -6px; bottom: -6px; animation: gatePulse 1.2s ease-in-out infinite alternate; }
 @keyframes gatePulse { from { opacity: 1; } to { opacity: 0.45; } }
 
-.float { position: absolute; right: 0; top: -2px; font-size: 14px; font-weight: 700; pointer-events: none; animation: floatUp 1.6s ease-out forwards; font-variant-numeric: tabular-nums; }
+.float { position: absolute; right: 0; top: 6px; font-size: 14px; font-weight: 700; pointer-events: none; animation: floatUp 1.6s ease-out forwards; font-variant-numeric: tabular-nums; }
 .research-top .r-float { position: static; display: inline-block; margin-left: 4px; }
 .meters.leaning .float { display: none; }
 .float.up { color: var(--up); }
 .float.down { color: var(--down); }
-@keyframes floatUp { 0% { transform: translateY(6px); opacity: 0; } 15% { transform: translateY(0); opacity: 1; } 70% { opacity: 1; } 100% { transform: translateY(-10px); opacity: 0; } }
+/* the change number drifts down, away from the semester label above it */
+@keyframes floatUp { 0% { transform: translateY(0); opacity: 0; } 15% { transform: translateY(3px); opacity: 1; } 70% { opacity: 1; } 100% { transform: translateY(9px); opacity: 0; } }
 
 .news { height: 66px; padding: 6px 2px 0; font-size: 13.5px; line-height: 1.4; overflow: hidden; }
 .news-1 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--dim); }
@@ -463,3 +464,17 @@ html[lang="zh-Hant"] .badge-name { font-family: var(--font-serif), "Noto Serif T
 
 /* The Start-semester button stays on screen on small phones instead of waiting below the fold. */
 .semester-advance-screen .sem-advance-btn { position: sticky; bottom: 12px; z-index: 2; box-shadow: 0 0 0 12px var(--bg); margin-top: 8px; }
+
+/* small phones: the opening line from the narrator shows in full, and the reveal button stays on screen */
+.news.has-intro { height: auto; min-height: 66px; }
+.news.has-intro .news-2 { -webkit-line-clamp: 4; }
+.reveal-btn { position: sticky; bottom: 12px; }
+@media (max-height: 680px) {
+  .reveal-screen { justify-content: flex-start; padding-bottom: 16px; }
+  .badge-ring { width: 150px; height: 150px; margin: 2px 0 10px; }
+  .badge-art svg { width: 132px; height: 132px; }
+  .badge-name { font-size: 28px; margin-bottom: 4px; }
+  .badge-line { font-size: 15px; margin-bottom: 8px; }
+  .chips, .badge-kept { margin-bottom: 8px; }
+  .badge-ending { margin-bottom: 12px; }
+}
