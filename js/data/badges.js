@@ -9,38 +9,58 @@
 // runs, see simulation/badges.mjs, bot not human) and a bar's score is its average minus its typical one.
 
 const BADGE_BARS = ['mind', 'body', 'wallet', 'bonds', 'research'];
+const BADGE_BAR_NAMES_ZH = { mind: '心智', body: '身體', wallet: '錢包', bonds: '朋友', research: '研究' };
 const BADGE_BAR_NAMES = { mind: 'Mind', body: 'Body', wallet: 'Wallet', bonds: 'Friends', research: 'Research' };
 const BADGE_TYPICAL = { mind: 46, body: 45, wallet: 50, bonds: 61, research: 31 };
 
 const BADGES = {
-  'mind-body':     { name: 'The Sleepless Sage',          line: 'Your head stayed clear and your back did not. The chair has your shape now.', chips: ['Clear-headed', 'Stooped', 'Caffeinated'] },
-  'mind-wallet':   { name: 'The Broke Philosopher',       line: 'You kept your peace and spent your rent. The noodles were a fair trade.', chips: ['Calm', 'Thrifty', 'Noodle-fed'] },
-  'mind-bonds':    { name: 'The Lab Hermit',              line: 'Quiet head, quiet phone. You will answer the group chat on Thursday.', chips: ['Calm', 'Unreachable', 'Focused'] },
-  'mind-research': { name: 'The Contented Procrastinator', line: 'Nothing is on fire, including the thesis. That was a choice, and a pleasant one.', chips: ['Relaxed', 'Behind', 'Well-rested'] },
-  'body-mind':     { name: 'The Marathon Worrier',        line: 'Strong legs, loud thoughts. You ran from the spiral and it kept up.', chips: ['Fit', 'Wired', 'Restless'] },
-  'body-wallet':   { name: 'The Gym Membership Believer', line: 'You paid for the pool and the lungs. The bank account noticed.', chips: ['Fit', 'Broke', 'Hydrated'] },
-  'body-bonds':    { name: 'The Lone Runner',             line: 'Sunrise, trail, nobody. You are in great shape and hard to reach.', chips: ['Fit', 'Solo', 'Early'] },
-  'body-research': { name: 'The Weekend Hiker',           line: 'You got outside. The data waited politely.', chips: ['Outdoorsy', 'Rested', 'Behind'] },
-  'wallet-mind':   { name: 'The Spreadsheet Saver',       line: 'Every dollar had a row. A few worries did not.', chips: ['Careful', 'Tense', 'Solvent'] },
-  'wallet-body':   { name: 'The Instant Noodle Banker',   line: 'The savings are real. So is the sodium.', chips: ['Frugal', 'Tired', 'Stocked'] },
-  'wallet-bonds':  { name: 'The Coupon Hermit',           line: 'You skipped the dinners and kept the cash. Fair, and a little lonely.', chips: ['Thrifty', 'At home', 'Solvent'] },
-  'wallet-research': { name: 'The Side-Gig Genius',       line: 'The side job paid. The project is still a rough draft.', chips: ['Hustling', 'Solvent', 'Distracted'] },
-  'bonds-mind':    { name: 'The Lab Parent',              line: 'Everyone’s birthday is on your calendar. Your own head is not.', chips: ['Warm', 'Frazzled', 'Reliable'] },
-  'bonds-body':    { name: 'The Conference Butterfly',    line: 'Every room knows your name. Your knees want a chair.', chips: ['Social', 'Frayed', 'Well-known'] },
-  'bonds-wallet':  { name: 'The Round Buyer',             line: 'You covered the table again. They love you and your card has questions.', chips: ['Generous', 'Beloved', 'Overdrawn'] },
-  'bonds-research': { name: 'The Social Chair',           line: 'The potluck was flawless. The chapter will come after the potluck.', chips: ['Beloved', 'Organized', 'Behind'] },
-  'research-mind': { name: 'The Cluster Whisperer',       line: 'The jobs ran and the figures got done. Your head has seen better semesters.', chips: ['Productive', 'Wired', 'Persistent'] },
-  'research-body': { name: 'The Lab Gremlin',             line: 'Papers up, posture down. You and the chair are one organism.', chips: ['Productive', 'Hunched', 'Nocturnal'] },
-  'research-wallet': { name: 'The Ramen Scholar',         line: 'The results are in. The savings are not.', chips: ['Driven', 'Broke', 'Productive'] },
-  'research-bonds': { name: 'The Quiet Finisher',          line: 'You got it done, mostly alone. People will say it went fast.', chips: ['Driven', 'Solo', 'Focused'] },
+  'mind-body':       { name: 'Calm Mind, Sore Back', line: 'Your head stayed clear. Your back did not. The chair has your shape now.', chips: ['Calm', 'Stiff', 'Caffeinated'],
+                       zh: { name: '腦袋清醒，背很痠', line: '腦袋一直很清楚，背就不一定了。那張椅子已經長成你的形狀。', chips: ['冷靜', '僵硬', '咖啡因'] } },
+  'mind-wallet':     { name: 'Calm but Broke', line: 'You kept your peace and spent your rent money. The noodles were a fair trade.', chips: ['Calm', 'Thrifty', 'Noodles'],
+                       zh: { name: '心很靜，錢很少', line: '你守住了平靜，花光了房租。泡麵換平靜，算公平。', chips: ['冷靜', '節儉', '泡麵'] } },
+  'mind-bonds':      { name: 'Head Down, Phone Off', line: 'Quiet head, quiet phone. You will answer the group chat on Thursday.', chips: ['Calm', 'Unreachable', 'Focused'],
+                       zh: { name: '埋頭做事，手機不回', line: '腦袋很靜，手機也很靜。群組訊息星期四再回。', chips: ['冷靜', '找不到人', '專心'] } },
+  'mind-research':   { name: 'Relaxed and Behind', line: 'Nothing is on fire, not even the thesis. You chose that, and it felt nice.', chips: ['Relaxed', 'Behind', 'Rested'],
+                       zh: { name: '悠哉但落後', line: '什麼都沒著火，論文也沒有。這是你自己選的，感覺還不錯。', chips: ['放鬆', '落後', '睡飽'] } },
+  'body-mind':       { name: 'Fit but Worried', line: 'Strong legs, loud thoughts. You ran away from the worry and it kept up.', chips: ['Fit', 'Wired', 'Restless'],
+                       zh: { name: '身體很棒，心很煩', line: '腿很有力，腦子很吵。你跑著躲開煩惱，它卻跟上來了。', chips: ['健康', '緊繃', '靜不下來'] } },
+  'body-wallet':     { name: 'Gym Rat, Empty Wallet', line: 'You paid for the pool and the weights. The bank account noticed.', chips: ['Fit', 'Broke', 'Hydrated'],
+                       zh: { name: '練出肌肉，錢包見底', line: '你把錢花在泳池和健身房，銀行帳戶都看見了。', chips: ['健康', '沒錢', '水喝很夠'] } },
+  'body-bonds':      { name: 'Runs Alone', line: 'Sunrise, trail, nobody else. You are in great shape and hard to reach.', chips: ['Fit', 'Alone', 'Early'],
+                       zh: { name: '一個人晨跑', line: '日出、小徑、沒有別人。你體力很好，也很難聯絡。', chips: ['健康', '獨來獨往', '早起'] } },
+  'body-research':   { name: 'Weekend Hiker', line: 'You got outside. The data waited politely.', chips: ['Outdoorsy', 'Rested', 'Behind'],
+                       zh: { name: '週末登山客', line: '你出門走走了，資料很有禮貌地等著。', chips: ['愛戶外', '休息夠', '落後'] } },
+  'wallet-mind':     { name: 'Saver, Stressed', line: 'Every dollar had its own row. A few worries did too.', chips: ['Careful', 'Tense', 'Solvent'],
+                       zh: { name: '存了錢，也存了煩惱', line: '每一塊錢都有自己的一欄，幾個煩惱也有。', chips: ['謹慎', '緊張', '有存款'] } },
+  'wallet-body':     { name: 'Instant Noodle Saver', line: 'The savings are real. So is the salt.', chips: ['Frugal', 'Tired', 'Stocked up'],
+                       zh: { name: '泡麵存錢族', line: '存款是真的，鈉也是真的。', chips: ['節儉', '疲倦', '囤貨'] } },
+  'wallet-bonds':    { name: 'Stays Home, Saves Cash', line: 'You skipped the dinners and kept the money. Fair, and a little lonely.', chips: ['Thrifty', 'At home', 'Solvent'],
+                       zh: { name: '宅在家存錢', line: '聚餐都沒去，錢都留下來了。很合理，也有點孤單。', chips: ['節儉', '在家', '有存款'] } },
+  'wallet-research': { name: 'Side Job Hero', line: 'The side job paid well. The project is still a rough draft.', chips: ['Hustling', 'Solvent', 'Distracted'],
+                       zh: { name: '打工達人', line: '打工賺了不少，研究還只是草稿。', chips: ['很拚', '有存款', '分心'] } },
+  'bonds-mind':      { name: 'Everyone’s Lab Parent', line: 'Everyone’s birthday is on your calendar. Your own rest is not.', chips: ['Warm', 'Frazzled', 'Reliable'],
+                       zh: { name: '大家的實驗室家長', line: '每個人的生日都在你的行事曆上，你自己的休息卻不在。', chips: ['溫暖', '焦頭爛額', '可靠'] } },
+  'bonds-body':      { name: 'Conference Social Star', line: 'Every room knows your name. Your feet want a chair.', chips: ['Social', 'Worn out', 'Well known'],
+                       zh: { name: '研討會社交之星', line: '每個會場都認得你，你的腳只想坐下。', chips: ['社交', '累壞了', '人脈廣'] } },
+  'bonds-wallet':    { name: 'Always Pays the Bill', line: 'You covered the table again. They love you. Your card has questions.', chips: ['Generous', 'Loved', 'Overdrawn'],
+                       zh: { name: '總是請客的人', line: '這桌又是你付。大家都愛你，你的信用卡有疑問。', chips: ['大方', '人緣好', '透支'] } },
+  'bonds-research':  { name: 'Party Planner', line: 'The potluck was perfect. The chapter comes after the potluck.', chips: ['Loved', 'Organized', 'Behind'],
+                       zh: { name: '聚餐總召', line: '聚餐辦得很完美，論文章節等聚餐之後再說。', chips: ['人緣好', '有條理', '落後'] } },
+  'research-mind':   { name: 'Productive but Frazzled', line: 'The jobs ran and the figures got done. Your head has seen better semesters.', chips: ['Productive', 'Wired', 'Persistent'],
+                       zh: { name: '很有產出，也很緊繃', line: '程式跑完了，圖也做完了。你的腦袋有過比較好的學期。', chips: ['有產出', '緊繃', '堅持'] } },
+  'research-body':   { name: 'Hunched at the Desk', line: 'Papers up, posture down. You and the chair are one organism.', chips: ['Productive', 'Hunched', 'Night owl'],
+                       zh: { name: '駝背的工作狂', line: '論文變多，姿勢變差。你和椅子已經合為一體。', chips: ['有產出', '駝背', '夜貓子'] } },
+  'research-wallet': { name: 'Papers, No Money', line: 'The results are in. The savings are not.', chips: ['Driven', 'Broke', 'Productive'],
+                       zh: { name: '論文多，錢包空', line: '成果都出來了，存款還沒有。', chips: ['拚勁', '沒錢', '有產出'] } },
+  'research-bonds':  { name: 'Gets It Done Alone', line: 'You finished, mostly on your own. People will say it went fast.', chips: ['Driven', 'Alone', 'Focused'],
+                       zh: { name: '一個人默默完成', line: '你大多是自己完成的，別人會說進度好快。', chips: ['拚勁', '獨自一人', '專心'] } },
 };
 const BADGE_IDS = Object.keys(BADGES);
 
 function badgeHint(id) {
   const [keep, spend] = id.split('-');
-  return `Protect ${BADGE_BAR_NAMES[keep]}, spend ${BADGE_BAR_NAMES[spend]}`;
+  return lang === 'zh' ? `守住${BADGE_BAR_NAMES_ZH[keep]}，花掉${BADGE_BAR_NAMES_ZH[spend]}` : `Protect ${BADGE_BAR_NAMES[keep]}, spend ${BADGE_BAR_NAMES[spend]}`;
 }
-
 // Which badge a run earned. `track` holds the running sum of each bar as the player saw it before each
 // card; the bars as the run ended count as one more sample.
 function computeBadge(track, finalBars) {

@@ -111,9 +111,10 @@ function renderTitle() {
       <button class="new-run-btn" onclick="beginGame()">New run</button>`
         : `<button class="begin-btn" onclick="beginGame()">${returning ? 'New run' : 'Begin'}<span class="btn-sub">A character and an advisor are dealt</span></button>`}
       <button class="link-btn" onclick="chooseInstead()">Choose who to play instead</button>
-      <button class="new-run-btn transcript-btn" onclick="openTranscript()">Transcript<span class="btn-sub">Badges ${save.badges.length} of ${BADGE_IDS.length} · Endings ${save.endings.length} of 6</span></button>
+      <button class="new-run-btn transcript-btn" onclick="openTranscript()">Transcript<span class="btn-sub">${lang === 'zh' ? UI_ZH.badgesOf(save.badges.length, BADGE_IDS.length) + ' · 結局 ' + save.endings.length + ' / 6' : `Badges ${save.badges.length} of ${BADGE_IDS.length} · Endings ${save.endings.length} of 6`}</span></button>
       <div class="any-school">Any grad school. This one happens to be UGA.</div>
       <div class="credits">by Chen Hsieh, a UGA bioinformatics PhD student</div>
+      ${langSwitch()}
       <a class="lab-link" href="https://chenhsieh.github.io/play-lab/">More games at Play Lab</a>
     </div>`;
 }
@@ -391,15 +392,16 @@ function renderPlay() {
 
 // ── Badge reveal: every run ends here first, wins and losses alike ──
 
-function endingWords(ending) { return ENDING_WORDS[ending] || 'Finished'; }
+function endingWords(ending) { return lang === 'zh' ? (UI_ZH.ending[ending] || '結束了') : (ENDING_WORDS[ending] || 'Finished'); }
+function semWords(n) { return lang === 'zh' ? UI_ZH.semester(n) : `semester ${n}`; }
 
 function badgeMark(b) {
-  return `<div class="badge-ring"><span class="badge-keep">${statIcon(b.keep)}</span><span class="badge-spend" title="Spent: ${BADGE_BAR_NAMES[b.spend]}">${statIcon(b.spend)}</span></div>`;
+  return `<div class="badge-ring"><span class="badge-art">${badgeArtSvg(b.id)}</span><span class="badge-spend">${statIcon(b.spend)}</span></div>`;
 }
 
 function renderBadgeReveal() {
   recordRun();
-  const b = gameState.badge, d = BADGES[b.id];
+  const b = gameState.badge, d = bt(b.id);
   const reveal = NARRATOR_REVEAL[gameState.ending] || NARRATOR_REVEAL.default;
   return `<div class="reveal-screen">
     <div class="narr-line">${narr(reveal)}</div>
@@ -407,9 +409,9 @@ function renderBadgeReveal() {
     <div class="badge-name">${d.name}</div>
     <div class="badge-line">${d.line}</div>
     <div class="chips">${d.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
-    <div class="badge-kept">Kept ${BADGE_BAR_NAMES[b.keep]} · spent ${BADGE_BAR_NAMES[b.spend]}</div>
-    <div class="badge-ending">${endingWords(gameState.ending)} · semester ${gameState.semester}</div>
-    <button class="play-again-btn reveal-btn" onclick="seeEnding()">See how it ended</button>
+    <div class="badge-kept">${keptLine(b.keep, b.spend)}</div>
+    <div class="badge-ending">${endingWords(gameState.ending)} · ${semWords(gameState.semester)}</div>
+    <button class="play-again-btn reveal-btn" onclick="seeEnding()">${lang === 'zh' ? UI_ZH.seeEnding : 'See how it ended'}</button>
   </div>`;
 }
 
@@ -417,7 +419,7 @@ function seeEnding() { gameState.badgeSeen = true; render(); }
 
 function badgeSpec() {
   const b = gameState.badge;
-  return { id: b.id, keep: b.keep, spend: b.spend, avg: b.avg, ending: gameState.ending, semester: gameState.semester };
+  return { id: b.id, keep: b.keep, spend: b.spend, avg: b.avg, ending: gameState.ending, semester: gameState.semester, lang };
 }
 
 async function paintBadgePreview() {
@@ -429,7 +431,7 @@ async function paintBadgePreview() {
     await drawBadgeCard(c, badgeSpec());
     c.className = 'badge-canvas';
     c.setAttribute('role', 'img');
-    c.setAttribute('aria-label', `Badge card: ${BADGES[gameState.badge.id].name}`);
+    c.setAttribute('aria-label', `${lang === 'zh' ? UI_ZH.badgeCard : 'Badge card'}: ${bt(gameState.badge.id).name}`);
     holder.replaceChildren(c);
   } catch (e) { holder.textContent = ''; }
 }
@@ -450,8 +452,8 @@ async function saveBadgeImage() {
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    if (feedback) { feedback.textContent = 'Saved.'; setTimeout(() => { feedback.textContent = ''; }, 3000); }
-  } catch (e) { if (feedback) feedback.textContent = 'Could not make the image.'; }
+    if (feedback) { feedback.textContent = lang === 'zh' ? UI_ZH.saved : 'Saved.'; setTimeout(() => { feedback.textContent = ''; }, 3000); }
+  } catch (e) { if (feedback) feedback.textContent = lang === 'zh' ? UI_ZH.couldNot : 'Could not make the image.'; }
 }
 
 // ── Transcript: everything there is to find ───────────────────────
@@ -460,7 +462,7 @@ function renderTranscript() {
   const tile = (icon, name, sub, found) => `<div class="tr-tile ${found ? 'found' : 'locked'}"><span class="tr-icon">${icon}</span><span class="tr-name">${found ? name : '???'}</span><span class="tr-sub">${sub}</span></div>`;
   const badgeTiles = BADGE_IDS.map(id => {
     const [keep] = id.split('-'), found = save.badges.includes(id);
-    return tile(statIcon(keep), BADGES[id].name, found ? `Kept ${BADGE_BAR_NAMES[keep]}, spent ${BADGE_BAR_NAMES[id.split('-')[1]]}` : badgeHint(id), found);
+    return tile(`<span class="tr-art">${badgeArtSvg(id)}</span>`, bt(id).name, found ? keptLine(keep, id.split('-')[1]) : badgeHint(id), found);
   }).join('');
   const endings = [['defended', 'Defended', 'Defend in semester 10'], ['mastered_out', 'Master’s', 'Leave with a master’s'], ['burnt_out', 'Burnt out', 'Let Mind hit 0'],
     ['hospitalized', 'Hospitalized', 'Let Body hit 0'], ['broke', 'Broke', 'Let Wallet hit 0'], ['disappeared', 'Disappeared', 'Let Friends hit 0']];
@@ -554,9 +556,9 @@ function renderEnding() {
   const takeBackBtn = canTakeBack()
     ? `<button class="takeback-btn" onclick="takeBack()">Take back that last choice<span>Once per run</span></button>` : '';
 
-  const bd = BADGES[gameState.badge.id];
+  const bd = bt(gameState.badge.id);
   return `<div class="ending-screen">
-    <div class="ending-badge">${statIcon(gameState.badge.keep)} <strong>${bd.name}</strong></div>
+    <div class="ending-badge"><span class="ending-badge-art">${badgeArtSvg(gameState.badge.id)}</span> <strong>${bd.name}</strong></div>
     <div class="ending-art">${endingIcon(ending)}</div>
     <div class="ending-title">${d.title}</div>
     <div class="ending-sub">Semester ${sem} · ${runInfo}</div>
@@ -572,12 +574,12 @@ function renderEnding() {
     </div>
     ${renderEndingGrid()}
     <div class="share-section">
-      <div class="share-label">Your badge</div>
+      <div class="share-label">${lang === 'zh' ? UI_ZH.yourBadge : 'Your badge'}</div>
       <div id="badgePreview" class="badge-preview"></div>
-      <button class="share-btn" onclick="saveBadgeImage()">Save image</button>
-      <div class="share-label share-gap">Share your run</div>
+      <button class="share-btn" onclick="saveBadgeImage()">${lang === 'zh' ? UI_ZH.saveImage : 'Save image'}</button>
+      <div class="share-label share-gap">${lang === 'zh' ? '分享你的結果' : 'Share your run'}</div>
       <textarea id="shareText" class="share-textarea" rows="3" onclick="this.select()">${shareLine()}\n${GAME_URL}r/${gameState.badge.id}/</textarea>
-      <button class="share-btn" onclick="shareRun()">Share</button>
+      <button class="share-btn" onclick="shareRun()">${lang === 'zh' ? UI_ZH.share : 'Share'}</button>
       <div id="shareFeedback" class="share-feedback"></div>
     </div>
     <div class="footer-credit">Made by a UGA PhD student · chenhsieh.xyz</div>
@@ -704,7 +706,8 @@ function showHelp() {
 
 // One line, no card text and no names: who you were, how it ended, how many endings found.
 function shareLine() {
-  const b = BADGES[gameState.badge.id];
+  const b = bt(gameState.badge.id);
+  if (lang === 'zh') return UI_ZH.shareLine(b.name, endingWords(gameState.ending), gameState.semester, save.endings.length);
   return `I'm ${b.name}. ${endingWords(gameState.ending)} in semester ${gameState.semester}, ${save.endings.length} of 6 endings found. Could you defend?`;
 }
 

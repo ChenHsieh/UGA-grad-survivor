@@ -6,8 +6,8 @@ const CARD_W = 1080, CARD_H = 1350;
 const CARD_CREDIT = 'After Reigns by Nerial (2016). Fiction, not an official UGA product.';
 const CARD_URL = 'chenhsieh.github.io/UGA-grad-survivor';
 const CARD_C = { bg: '#0e0c0a', panel: '#1a1714', text: '#f5f0e8', dim: '#c9c0ae', muted: '#8f8676', gold: '#d4a017', down: '#ff8a78', track: '#2e2a24' };
-const CARD_SERIF = 'Georgia, "Times New Roman", serif';
-const CARD_SANS = '"DM Sans", Helvetica, Arial, sans-serif';
+const CARD_SERIF = 'Georgia, "Times New Roman", "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", "Droid Sans Fallback", serif';
+const CARD_SANS = '"DM Sans", Helvetica, Arial, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Droid Sans Fallback", sans-serif';
 
 const ENDING_WORDS = { defended: 'Defended', mastered_out: 'Left with a master’s', burnt_out: 'Burnt out', hospitalized: 'Ended in hospital', broke: 'Ran out of money', disappeared: 'Stopped showing up' };
 
@@ -22,6 +22,12 @@ function svgToImage(inner, box, color) {
 }
 
 function wrapLines(ctx, text, maxW) {
+  if (/[\u3000-\u9fff]/.test(text)) {
+    const out = []; let cur = '';
+    for (const ch of text) { if (ctx.measureText(cur + ch).width > maxW && cur) { out.push(cur); cur = ch; } else cur += ch; }
+    if (cur) out.push(cur);
+    return out;
+  }
   const words = text.split(' '), lines = [];
   let cur = '';
   words.forEach(w => {
@@ -42,7 +48,8 @@ function fillWrapped(ctx, text, x, y, maxW, lineH) {
 async function drawBadgeCard(canvas, spec) {
   canvas.width = CARD_W; canvas.height = CARD_H;
   const ctx = canvas.getContext('2d');
-  const b = BADGES[spec.id];
+  const zh = spec.lang === 'zh';
+  const b = zh ? BADGES[spec.id].zh : BADGES[spec.id];
   ctx.fillStyle = CARD_C.bg; ctx.fillRect(0, 0, CARD_W, CARD_H);
   ctx.textBaseline = 'alphabetic';
 
@@ -58,8 +65,8 @@ async function drawBadgeCard(canvas, spec) {
   ctx.fillStyle = CARD_C.panel; ctx.beginPath(); ctx.arc(cx, cy, 220, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = CARD_C.gold; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(cx, cy, 220, 0, Math.PI * 2); ctx.stroke();
   ctx.lineWidth = 3; ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.arc(cx, cy, 200, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
-  const keepImg = await svgToImage(ART_STATS[spec.keep], 24, CARD_C.gold);
-  ctx.drawImage(keepImg, cx - 110, cy - 110, 220, 220);
+  const sceneImg = await svgToImage(BA_INNER(spec.id), 200, 'none');
+  ctx.drawImage(sceneImg, cx - 190, cy - 190, 380, 380);
   const spendDisc = { x: cx + 160, y: cy + 160, r: 62 };
   ctx.fillStyle = CARD_C.bg; ctx.beginPath(); ctx.arc(spendDisc.x, spendDisc.y, spendDisc.r + 8, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = CARD_C.panel; ctx.strokeStyle = CARD_C.down; ctx.lineWidth = 6;
@@ -83,8 +90,8 @@ async function drawBadgeCard(canvas, spec) {
   // ending, semester, and five bars (the run's average, kept and spent marked)
   const rowY = 1030;
   ctx.fillStyle = CARD_C.text; ctx.font = `700 40px ${CARD_SANS}`;
-  const rowText = spec.ending ? `${ENDING_WORDS[spec.ending] || 'Finished'} · semester ${spec.semester}`
-    : `Kept ${BADGE_BAR_NAMES[spec.keep]} · spent ${BADGE_BAR_NAMES[spec.spend]}`;
+  const rowText = spec.ending ? `${zh ? (UI_ZH.ending[spec.ending] || '結束了') : (ENDING_WORDS[spec.ending] || 'Finished')} · ${zh ? UI_ZH.semester(spec.semester) : 'semester ' + spec.semester}`
+    : keptLineFor(zh, spec.keep, spec.spend);
   ctx.fillText(rowText, cx, rowY);
   const barW = 150, gap = 28, x0 = (CARD_W - (5 * barW + 4 * gap)) / 2;
   for (let i = 0; i < BADGE_BARS.length; i++) {
@@ -95,12 +102,12 @@ async function drawBadgeCard(canvas, spec) {
     ctx.fillStyle = CARD_C.track; ctx.fillRect(x, rowY + 86, barW, 16);
     ctx.fillStyle = col; ctx.fillRect(x, rowY + 86, Math.max(4, barW * Math.min(100, spec.avg[k]) / 100), 16);
     ctx.fillStyle = col; ctx.font = `700 26px ${CARD_SANS}`;
-    ctx.fillText(k === spec.keep ? 'Kept' : k === spec.spend ? 'Spent' : '', x + barW / 2, rowY + 136);
+    ctx.fillText(k === spec.keep ? (zh ? '守住' : 'Kept') : k === spec.spend ? (zh ? '花掉' : 'Spent') : '', x + barW / 2, rowY + 136);
   }
 
   // credit and link
   ctx.fillStyle = CARD_C.muted; ctx.font = `400 27px ${CARD_SANS}`;
-  ctx.fillText(CARD_CREDIT, cx, 1268);
+  ctx.fillText(zh ? UI_ZH.credit : CARD_CREDIT, cx, 1268);
   ctx.fillStyle = CARD_C.dim; ctx.font = `700 30px ${CARD_SANS}`;
   ctx.fillText(CARD_URL, cx, 1314);
   return canvas;
@@ -110,7 +117,8 @@ async function drawBadgeCard(canvas, spec) {
 async function drawBadgePreview(canvas, spec) {
   canvas.width = 1200; canvas.height = 630;
   const ctx = canvas.getContext('2d');
-  const b = BADGES[spec.id];
+  const zh = spec.lang === 'zh';
+  const b = zh ? BADGES[spec.id].zh : BADGES[spec.id];
   ctx.fillStyle = CARD_C.bg; ctx.fillRect(0, 0, 1200, 630);
   const full = document.createElement('canvas');
   await drawBadgeCard(full, spec);
@@ -121,7 +129,7 @@ async function drawBadgePreview(canvas, spec) {
   ctx.textAlign = 'left'; ctx.fillStyle = CARD_C.text; ctx.font = `700 34px ${CARD_SERIF}`;
   ctx.fillText('UGA Grad Survivor', 134, 90);
   ctx.fillStyle = CARD_C.gold; ctx.font = `700 24px ${CARD_SANS}`;
-  ctx.fillText('I got this badge', 54, 214);
+  ctx.fillText(zh ? '我拿到這個徽章' : 'I got this badge', 54, 214);
   ctx.fillStyle = CARD_C.text;
   let size = 78;
   ctx.font = `700 ${size}px ${CARD_SERIF}`;
@@ -132,6 +140,10 @@ async function drawBadgePreview(canvas, spec) {
   ctx.fillStyle = CARD_C.dim; ctx.font = `italic 400 30px ${CARD_SERIF}`;
   fillWrapped(ctx, b.line, 54, y + 20, maxW, 42);
   ctx.fillStyle = CARD_C.dim; ctx.font = `700 28px ${CARD_SANS}`;
-  ctx.fillText('Ten semesters. Which one are you?', 54, 580);
+  ctx.fillText(zh ? UI_ZH.tag : 'Ten semesters. Which one are you?', 54, 580);
   return canvas;
 }
+
+function keptLineFor(zh, k, s) { return zh ? UI_ZH.kept(k, s) : `Kept ${BADGE_BAR_NAMES[k]} · spent ${BADGE_BAR_NAMES[s]}`; }
+// The scene as a standalone SVG for the canvas (200 x 200 viewBox, so svgToImage's box is 200).
+function BA_INNER(id) { return `<defs>${BADGE_FILTER}</defs><g filter="url(#hand)">${BA.S[id]}</g>`; }
