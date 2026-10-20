@@ -1,5 +1,5 @@
 // Language for the badge screens: English (default) or Traditional Chinese. The choice is remembered.
-// Only the badge, its words and the transcript are translated; the cards stay in English.
+// Only the badge, its words and the transcript are translated; the cards stay in English, and the title screen says so in Chinese mode.
 let lang = 'en';
 try { if (localStorage.getItem('uga_lang') === 'zh') lang = 'zh'; } catch (e) {}
 document.documentElement.setAttribute('lang', lang === 'zh' ? 'zh-Hant' : 'en');
@@ -29,5 +29,6 @@ function setLang(l) {
   render();
 }
 function langSwitch() {
-  return `<div class="lang-switch" role="group" aria-label="Language"><button class="lang-btn ${lang === 'en' ? 'on' : ''}" aria-pressed="${lang === 'en'}" onclick="setLang('en')">English</button><button class="lang-btn ${lang === 'zh' ? 'on' : ''}" aria-pressed="${lang === 'zh'}" lang="zh-Hant" onclick="setLang('zh')">繁體中文</button></div>`;
+  const note = lang === 'zh' ? '<p class="lang-note" lang="zh-Hant">中文版目前只翻譯了徽章和紀錄。卡片、選項和結局的文字還是英文。</p>' : '';
+  return `<div class="lang-switch" role="group" aria-label="Language"><button class="lang-btn ${lang === 'en' ? 'on' : ''}" aria-pressed="${lang === 'en'}" onclick="setLang('en')">English</button><button class="lang-btn ${lang === 'zh' ? 'on' : ''}" aria-pressed="${lang === 'zh'}" lang="zh-Hant" onclick="setLang('zh')">繁體中文</button></div>` + note;
 }
