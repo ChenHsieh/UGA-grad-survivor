@@ -114,7 +114,6 @@ function renderTitle() {
       <div class="any-school">Any grad school. This one happens to be UGA.</div>
       <div class="credits">by Chen Hsieh, a UGA bioinformatics PhD student</div>
       ${langSwitch()}
-      <a class="lab-link" href="https://chenhsieh.github.io/play-lab/">More games at Play Lab</a>
     </div>`;
 }
 
