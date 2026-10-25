@@ -2,8 +2,8 @@
  * drags, so a double tap or a stray pinch must not zoom or shrink the page.
  *  - viewport meta gets maximum-scale=1, user-scalable=no (browsers that honour it); the page's own meta should already say so.
  *  - html, body: touch-action manipulation (no double-tap zoom, no 300 ms click delay), no text-size jump on rotate.
- *  - iOS Safari ignores user-scalable: gesturestart / gesturechange (pinch) are cancelled, and so is a second touchend inside
- *    300 ms on something that is not a control. Buttons, links, fields, canvases, svg, anything with tabindex / onclick / cursor: pointer and anything marked data-zg-keep keep their taps.
+ *  - iOS Safari ignores user-scalable: gesturestart / gesturechange (pinch) are cancelled. Double-tap zoom is off through
+ *    touch-action: manipulation; taps are never cancelled, so a game's own double tap keeps working.
  * System accessibility zoom is not touched. Idempotent: loading it twice does nothing the second time. */
 (function () {
   'use strict';
@@ -23,15 +23,6 @@
   head.appendChild(st);
   var block = function (e) { if (e.cancelable) e.preventDefault(); };
   ['gesturestart', 'gesturechange'].forEach(function (n) { document.addEventListener(n, block, { passive: false }); });
-  var last = 0;
-  var KEEP = 'button,a,input,select,textarea,label,summary,canvas,svg,[role="button"],[role="slider"],[role="link"],[data-zg-keep]';
-  document.addEventListener('touchend', function (e) {
-    var now = e.timeStamp || Date.now();
-    var el = e.target && e.target.nodeType === 1 ? e.target : (e.target && e.target.parentElement);
-    var t = el && el.closest ? el.closest(KEEP + ',[tabindex],[onclick]') : null;
-    // a div that looks tappable (cursor: pointer) is a control too: a fast second tap on it is play, not a zoom
-    if (!t && el && getComputedStyle(el).cursor === 'pointer') t = el;
-    if (!t && now - last < 300 && e.cancelable) e.preventDefault();
-    last = now;
-  }, { passive: false });
+  // No second-tap blocking: touch-action: manipulation above already turns double-tap zoom off in iOS Safari and Chrome, and a
+  // handler that cancels the second touchend also kills a game's own double tap (Dynasty Guess zooms its picture on a double tap).
 })();
